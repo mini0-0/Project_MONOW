@@ -1,0 +1,18 @@
+plugins {
+	id 'org.springframework.boot'
+}
+
+dependencies {
+	implementation project(':monow-domain')
+	implementation project(':monow-global')
+
+	// Web
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+	runtimeOnly 'org.postgresql:postgresql'
+
+}
+
+bootJar { enabled = true }
+jar { enabled = false }
