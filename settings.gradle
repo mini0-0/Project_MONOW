@@ -1,0 +1,12 @@
+pluginManagement {
+	repositories {
+		maven { url = 'https://repo.spring.io/snapshot' }
+		gradlePluginPortal()
+	}
+}
+rootProject.name = 'monow'
+
+include 'monow-api'
+include 'monow-domain'
+include 'monow-global'
+include 'monow-batch'
