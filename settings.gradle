@@ -6,7 +6,7 @@ pluginManagement {
 }
 rootProject.name = 'monow'
 
-include 'monow-api'
-include 'monow-domain'
-include 'monow-global'
-include 'monow-batch'
+include 'api'
+include 'domain'
+include 'global'
+include 'batch'

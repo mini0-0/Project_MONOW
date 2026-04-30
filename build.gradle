@@ -22,7 +22,6 @@ allprojects {
 
 subprojects {
 	apply plugin: 'java'
-	apply plugin: 'java-library'
 	apply plugin: 'io.spring.dependency-management'
 
 	// 의존성 버전 정리
