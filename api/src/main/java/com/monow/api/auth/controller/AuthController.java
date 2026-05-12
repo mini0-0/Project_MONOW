@@ -1,7 +1,9 @@
 package com.monow.api.auth.controller;
 
+import com.monow.api.auth.dto.request.LoginRequest;
 import com.monow.api.auth.dto.request.SignUpRequest;
 import com.monow.api.auth.dto.response.AuthResponse;
+import com.monow.domain.auth.dto.command.LoginCommand;
 import com.monow.domain.auth.dto.command.SignUpCommand;
 import com.monow.domain.auth.dto.result.AuthResult;
 import com.monow.domain.auth.service.AuthService;
@@ -26,5 +28,14 @@ public class AuthController {
         AuthResult result = authService.signUp(command);
         AuthResponse response = AuthResponse.from(result);
         return ApiResponse.success(response);
+    }
+
+    @PostMapping("/login")
+    public ApiResponse<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
+        LoginCommand command = request.toCommand();
+        AuthResult result = authService.login(command);
+        AuthResponse response = AuthResponse.from(result);
+        return ApiResponse.success(response);
+
     }
 }
