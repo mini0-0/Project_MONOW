@@ -7,7 +7,6 @@ import com.monow.domain.user.entity.UserStatus;
 public record AuthResult(
         Long userId,
         String email,
-        String password,
         String name,
         String nickname,
         UserRole userRole,
@@ -18,7 +17,6 @@ public record AuthResult(
         return new AuthResult(
                 user.getId(),
                 user.getEmail(),
-                user.getPassword(),
                 user.getName(),
                 user.getNickname(),
                 user.getUserRole(),

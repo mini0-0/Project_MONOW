@@ -1,5 +1,6 @@
 package com.monow.domain.auth.service;
 
+import com.monow.domain.auth.dto.command.LoginCommand;
 import com.monow.domain.auth.dto.command.SignUpCommand;
 import com.monow.domain.auth.dto.result.AuthResult;
 import com.monow.domain.user.entity.User;
@@ -16,6 +17,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -75,7 +78,6 @@ public class AuthServiceTest {
             assertThat(savedUser.getUserStatus()).isEqualTo(UserStatus.ACTIVE);
 
             assertThat(result.email()).isEqualTo(command.email());
-            assertThat(result.password()).isEqualTo(command.password());
             assertThat(result.name()).isEqualTo(command.name());
             assertThat(result.nickname()).isEqualTo(command.nickname());
             assertThat(result.userRole()).isEqualTo(UserRole.USER);
@@ -174,6 +176,90 @@ public class AuthServiceTest {
             verify(userRepository, never()).existsByEmail(anyString());
             verify(userRepository, never()).existsByNickname(anyString());
             verify(userRepository, never()).save(any(User.class));
+
+
+        }
+
+        @Test
+        @DisplayName("로그인 - 로그인 성공")
+        void login_success() {
+            // Given
+            LoginCommand command = new LoginCommand(
+                    "test@test.com",
+                    "1234"
+            );
+
+            User user = User.createUser(
+                    "test@test.com",
+                    "1234",
+                    "홍길동",
+                    "워렌버핏"
+                    );
+
+            given(userRepository.findByEmail(command.email())).willReturn(Optional.of(user));
+
+            // When
+            AuthResult result = authService.login(command);
+
+            // Then
+            assertThat(result.email()).isEqualTo(command.email());
+            assertThat(result.name()).isEqualTo(user.getName());
+            assertThat(result.nickname()).isEqualTo(user.getNickname());
+            assertThat(result.userRole()).isEqualTo(user.getUserRole());
+            assertThat(result.status()).isEqualTo(user.getUserStatus());
+
+            verify(userRepository).findByEmail(command.email());
+
+        }
+
+        @Test
+        @DisplayName("로그인 실패 - 회원가입 안한 계정")
+        void loginFail_notSignUp() {
+            // Given
+            LoginCommand command = new LoginCommand(
+                    "test@test.com",
+                    "1234"
+            );
+
+            given(userRepository.findByEmail(command.email()))
+                    .willReturn(Optional.empty());
+
+            // When & Then
+            BusinessException exception = assertThrows(BusinessException.class,
+                    () -> authService.login(command));
+
+            assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.LOGIN_FAIL);
+
+            verify(userRepository).findByEmail(command.email());
+
+        }
+
+        @Test
+        @DisplayName("로그인 실패 - 비밀번호 불일치")
+        void loginFail_invalidPassword() {
+            // Given
+            LoginCommand command = new LoginCommand(
+                    "test@test.com",
+                    "0000"
+            );
+
+            User user = User.createUser(
+                    "test@test.com",
+                    "1234",
+                    "홍길동",
+                    "워렌버핏"
+            );
+
+            given(userRepository.findByEmail(command.email())).willReturn(Optional.of(user));
+
+            // When
+            BusinessException exception = assertThrows(BusinessException.class,
+                    () -> authService.login(command));
+
+            // Then
+            assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.LOGIN_FAIL);
+
+            verify(userRepository).findByEmail(command.email());
 
 
         }

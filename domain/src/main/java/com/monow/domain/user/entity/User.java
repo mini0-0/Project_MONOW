@@ -15,7 +15,7 @@ public class User extends BaseTimeEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name= "email", nullable = false, length = 100)
+    @Column(name= "email",unique = true, nullable = false, length = 100)
     private String email;
 
     @Column(name = "password", nullable = false, length = 255)
@@ -24,7 +24,7 @@ public class User extends BaseTimeEntity {
     @Column(name = "real_name", nullable = false, length = 50)
     private String name;
 
-    @Column(name = "nickname", nullable = false, length = 255)
+    @Column(name = "nickname",unique = true, nullable = false, length = 255)
     private String nickname;
 
     @Enumerated(EnumType.STRING)
