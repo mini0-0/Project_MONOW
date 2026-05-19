@@ -3,9 +3,8 @@ package com.monow.domain.auth.service;
 import com.monow.domain.auth.dto.command.LoginCommand;
 import com.monow.domain.auth.dto.command.SignUpCommand;
 import com.monow.domain.auth.dto.result.AuthResult;
-import com.monow.domain.user.entity.User;
-import com.monow.domain.user.entity.UserRole;
-import com.monow.domain.user.entity.UserStatus;
+import com.monow.domain.user.entity.*;
+import com.monow.domain.user.repository.AccountRepository;
 import com.monow.domain.user.repository.UserRepository;
 import com.monow.global.error.exception.BusinessException;
 import com.monow.global.error.model.ErrorCode;
@@ -18,6 +17,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,14 +30,21 @@ import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 public class AuthServiceTest {
+
+    @Mock
+    private AccountNumberGenerator accountNumberGenerator;
+
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private AccountRepository accountRepository;
 
     @InjectMocks
     private AuthService authService;
 
     @Nested
-    @DisplayName("회원가입")
+    @DisplayName("회원가입 ")
     class SignUp {
 
         @Test
@@ -45,6 +52,7 @@ public class AuthServiceTest {
         void signUpSuccess() {
             // Given
             ArgumentCaptor<User> userArgumentCaptor = ArgumentCaptor.forClass(User.class);
+            ArgumentCaptor<Account> accountArgumentCaptor = ArgumentCaptor.forClass(Account.class);
 
             SignUpCommand command = new SignUpCommand(
                     "test@test.com",
@@ -62,14 +70,20 @@ public class AuthServiceTest {
             given(userRepository.save(any(User.class)))
                     .willAnswer(invocation -> invocation.getArgument(0));
 
+            given(accountNumberGenerator.generate())
+                    .willReturn("MONOW260514123456");
+
             // When
             AuthResult result = authService.signUp(command);
 
             // Then
             verify(userRepository).save(userArgumentCaptor.capture());
+            verify(accountRepository).save(accountArgumentCaptor.capture());
 
             User savedUser = userArgumentCaptor.getValue();
+            Account account = accountArgumentCaptor.getValue();
 
+            // User 검증
             assertThat(savedUser.getEmail()).isEqualTo(command.email());
             assertThat(savedUser.getPassword()).isEqualTo(command.password());
             assertThat(savedUser.getName()).isEqualTo(command.name());
@@ -77,11 +91,21 @@ public class AuthServiceTest {
             assertThat(savedUser.getUserRole()).isEqualTo(UserRole.USER);
             assertThat(savedUser.getUserStatus()).isEqualTo(UserStatus.ACTIVE);
 
+            // AuthResult 검증
             assertThat(result.email()).isEqualTo(command.email());
             assertThat(result.name()).isEqualTo(command.name());
             assertThat(result.nickname()).isEqualTo(command.nickname());
             assertThat(result.userRole()).isEqualTo(UserRole.USER);
             assertThat(result.status()).isEqualTo(UserStatus.ACTIVE);
+
+
+            // Account 검증
+            assertThat(account.getUser()).isEqualTo(savedUser);
+            assertThat(account.getAccountNumber()).isEqualTo("MONOW260514123456");
+            assertThat(account.getSeedMoney()).isEqualByComparingTo(new BigDecimal("100000000.00"));
+            assertThat(account.getBalance()).isEqualByComparingTo(new BigDecimal("100000000.00"));
+            assertThat(account.getStatus()).isEqualTo(AccountStatus.ACTIVE);
+
 
             verify(userRepository).existsByEmail(command.email());
             verify(userRepository).existsByNickname(command.nickname());
@@ -179,9 +203,14 @@ public class AuthServiceTest {
 
 
         }
+    }
 
+
+    @Nested
+    @DisplayName("로그인")
+    class login{
         @Test
-        @DisplayName("로그인 - 로그인 성공")
+        @DisplayName("로그인 성공")
         void login_success() {
             // Given
             LoginCommand command = new LoginCommand(
@@ -261,8 +290,8 @@ public class AuthServiceTest {
 
             verify(userRepository).findByEmail(command.email());
 
-
         }
+
     }
 
 }
