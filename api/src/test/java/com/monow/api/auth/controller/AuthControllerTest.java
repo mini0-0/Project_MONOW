@@ -76,6 +76,7 @@ public class AuthControllerTest {
                 .andExpect(jsonPath("$.data.userRole").value("USER"))
                 .andExpect(jsonPath("$.data.status").value("ACTIVE"));
 
+
         verify(authService).signUp(any(SignUpCommand.class));
     }
 
