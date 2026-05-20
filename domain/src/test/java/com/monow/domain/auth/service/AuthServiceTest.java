@@ -1,10 +1,13 @@
 package com.monow.domain.auth.service;
 
+import com.monow.domain.account.entity.Account;
+import com.monow.domain.account.entity.AccountStatus;
+import com.monow.domain.account.service.AccountNumberGenerator;
 import com.monow.domain.auth.dto.command.LoginCommand;
 import com.monow.domain.auth.dto.command.SignUpCommand;
 import com.monow.domain.auth.dto.result.AuthResult;
 import com.monow.domain.user.entity.*;
-import com.monow.domain.user.repository.AccountRepository;
+import com.monow.domain.account.repository.AccountRepository;
 import com.monow.domain.user.repository.UserRepository;
 import com.monow.global.error.exception.BusinessException;
 import com.monow.global.error.model.ErrorCode;

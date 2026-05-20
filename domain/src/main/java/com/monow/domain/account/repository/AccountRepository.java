@@ -1,6 +1,6 @@
-package com.monow.domain.user.repository;
+package com.monow.domain.account.repository;
 
-import com.monow.domain.user.entity.Account;
+import com.monow.domain.account.entity.Account;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

@@ -1,4 +1,4 @@
-package com.monow.domain.auth.service;
+package com.monow.domain.account.service;
 
 import org.springframework.stereotype.Component;
 

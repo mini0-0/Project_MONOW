@@ -1,5 +1,6 @@
-package com.monow.domain.user.entity;
+package com.monow.domain.account.entity;
 
+import com.monow.domain.user.entity.User;
 import com.monow.global.common.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
