@@ -9,7 +9,8 @@ public enum ErrorCode {
     PASSWORD_CONFIRM_MISMATCH(HttpStatus.BAD_REQUEST, "PASSWORD_CONFIRM_MISMATCH", "비밀번호가 일치하지 않습니다."),
     DUPLICATED_EMAIL(HttpStatus.CONFLICT, "DUPLICATED_EMAIL", "이미 가입된 이메일입니다."),
     DUPLICATED_NICKNAME(HttpStatus.CONFLICT, "DUPLICATED_NICKNAME", "이미 사용 중인 닉네임입니다."),
-    LOGIN_FAIL(HttpStatus.UNAUTHORIZED, "LOGIN_FAIL", "이메일 또는 비밀번호가 일치하지 않습니다.")
+    LOGIN_FAIL(HttpStatus.UNAUTHORIZED, "LOGIN_FAIL", "이메일 또는 비밀번호가 일치하지 않습니다."),
+    STOCK_NOT_FOUND(HttpStatus.BAD_REQUEST, "STOCK_NOT_FOUND", "존재하지 않은 종목코드입니다.")
     ;
 
     private final HttpStatus status;
