@@ -11,9 +11,9 @@ import org.springframework.format.annotation.DateTimeFormat;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+@Getter
 @Entity
 @Table(name = "stock_price_daily")
-@Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class StockPriceDaily extends BaseTimeEntity {
 
@@ -44,4 +44,35 @@ public class StockPriceDaily extends BaseTimeEntity {
     @Column(name = "volume", nullable = false)
     private Long volume;
 
+    private StockPriceDaily(
+            Stock stock,
+            LocalDate tradeDate,
+            BigDecimal openPrice,
+            BigDecimal highPrice,
+            BigDecimal lowPrice,
+            BigDecimal closePrice,
+            Long volume
+    ) {
+        this.stock = stock;
+        this.tradeDate = tradeDate;
+        this.openPrice = openPrice;
+        this.highPrice = highPrice;
+        this.lowPrice = lowPrice;
+        this.closePrice = closePrice;
+        this.volume = volume;
+    }
+
+
+
+    public static StockPriceDaily createDailyPrice(
+            Stock stock,
+            LocalDate tradeDate,
+            BigDecimal openPrice,
+            BigDecimal highPrice,
+            BigDecimal lowPrice,
+            BigDecimal closePrice,
+            Long volume
+    ) {
+        return new StockPriceDaily(stock, tradeDate, openPrice, highPrice, lowPrice, closePrice, volume);
+    }
 }

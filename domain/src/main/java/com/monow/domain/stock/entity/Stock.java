@@ -28,4 +28,17 @@ public class Stock extends BaseTimeEntity {
     @Column(name = "is_active")
     private  Boolean isActive;
 
+    private Stock(String stockCode, String stockName, String marketType){
+        this.stockCode = stockCode;
+        this.stockName = stockName;
+        this.marketType = marketType;
+    }
+
+    public static Stock createStock(
+            String stockCode,
+            String stockName,
+            String marketType) {
+
+        return new Stock(stockCode, stockName, marketType);
+    }
 }
