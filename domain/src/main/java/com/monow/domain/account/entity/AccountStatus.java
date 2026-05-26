@@ -1,4 +1,4 @@
-package com.monow.domain.user.entity;
+package com.monow.domain.account.entity;
 
 public enum AccountStatus {
     ACTIVE,
