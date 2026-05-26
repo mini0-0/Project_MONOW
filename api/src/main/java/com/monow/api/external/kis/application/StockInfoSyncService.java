@@ -1,6 +1,5 @@
 package com.monow.api.external.kis.application;
 
-import com.monow.api.external.kis.client.KisDailyPriceClient;
 import com.monow.api.external.kis.client.KisStockInfoClient;
 import com.monow.api.external.kis.client.KisTokenClient;
 import com.monow.api.external.kis.dto.response.KisStockInfoResponse;
@@ -29,20 +28,28 @@ public class StockInfoSyncService {
     @Transactional
     public void syncStockInfo(String stockCode) {
 
-        if (!stockRepository.existsByStockCode(stockCode)) {
-            KisTokenResponse tokenResponse = kisTokenClient.issueToken();
-            String accessToken = tokenResponse.accessToken();
-
-            KisStockInfoResponse response = kisStockInfoClient.fetchStockInfo(accessToken, stockCode);
-
-            KisStockInfoResponse.Output output = response.output();
-
-            Stock stock = kisStockInfoMapper.toEntity(output);
-
-            stockRepository.save(stock);
-
+        if (stockRepository.existsByStockCode(stockCode)) {
+            return;
         }
 
+        KisTokenResponse tokenResponse = kisTokenClient.issueToken();
+        String accessToken = tokenResponse.accessToken();
+
+        KisStockInfoResponse response = kisStockInfoClient.fetchStockInfo(accessToken, stockCode);
+
+        if (response == null || !"0".equals(response.rtCd())) {
+            throw new BusinessException(ErrorCode.STOCK_INFO_FETCH_FAILED);
+        }
+
+        if (response.output() == null) {
+            throw new BusinessException(ErrorCode.STOCK_INFO_FETCH_FAILED);
+        }
+
+        KisStockInfoResponse.Output output = response.output();
+
+        Stock stock = kisStockInfoMapper.toEntity(output);
+
+        stockRepository.save(stock);
 
     }
 }

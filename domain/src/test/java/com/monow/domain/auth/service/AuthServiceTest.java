@@ -51,8 +51,8 @@ public class AuthServiceTest {
     class SignUp {
 
         @Test
-        @DisplayName("성공")
-        void signUpSuccess() {
+        @DisplayName("[성공] - 회원가입 성공")
+        void signUp_whenValidRequest_savesUser() {
             // Given
             ArgumentCaptor<User> userArgumentCaptor = ArgumentCaptor.forClass(User.class);
             ArgumentCaptor<Account> accountArgumentCaptor = ArgumentCaptor.forClass(Account.class);
@@ -117,8 +117,8 @@ public class AuthServiceTest {
         }
 
         @Test
-        @DisplayName("실패 - 이메일 중복")
-        void signUpFail_duplicateEmail() {
+        @DisplayName("[실패] - 이메일 중복")
+        void signUp_whenEmailAlreadyExists_throwsDuplicatedEmail() {
             // Given
             ArgumentCaptor<User> userArgumentCaptor = ArgumentCaptor.forClass(User.class);
 
@@ -147,8 +147,8 @@ public class AuthServiceTest {
         }
 
         @Test
-        @DisplayName("실패 - 닉네임 중복")
-        void signUpFail_duplicateNickname() {
+        @DisplayName("[실패] - 닉네임 중복")
+        void signUp_whenNicknameAlreadyExists_throwsDuplicatedNickname(){
             // Given
             ArgumentCaptor<User> userArgumentCaptor = ArgumentCaptor.forClass(User.class);
 
@@ -181,8 +181,8 @@ public class AuthServiceTest {
         }
 
         @Test
-        @DisplayName("실패 - 비밀번호와 비밀번호 확인 불일치")
-        void signUpFail_passwordConfirmMisMatch() {
+        @DisplayName("[실패] - 비밀번호와 비밀번호 확인 불일치")
+        void signUp_whenPasswordConfirmMismatch_throwsPasswordConfirmMismatch() {
             // Given
             SignUpCommand command = new SignUpCommand(
                     "test@test.com",
@@ -213,8 +213,8 @@ public class AuthServiceTest {
     @DisplayName("로그인")
     class login{
         @Test
-        @DisplayName("로그인 성공")
-        void login_success() {
+        @DisplayName("[성공] - 로그인 성공")
+        void login_whenValidCredentials_returnsLoginResult() {
             // Given
             LoginCommand command = new LoginCommand(
                     "test@test.com",
@@ -245,8 +245,8 @@ public class AuthServiceTest {
         }
 
         @Test
-        @DisplayName("로그인 실패 - 회원가입 안한 계정")
-        void loginFail_notSignUp() {
+        @DisplayName("[실패] - 회원가입 안한 계정")
+        void login_whenEmailNotRegistered_throwsLoginFail() {
             // Given
             LoginCommand command = new LoginCommand(
                     "test@test.com",
@@ -267,8 +267,8 @@ public class AuthServiceTest {
         }
 
         @Test
-        @DisplayName("로그인 실패 - 비밀번호 불일치")
-        void loginFail_invalidPassword() {
+        @DisplayName("[실패] - 비밀번호 불일치")
+        void login_whenPasswordInvalid_throwsLoginFail() {
             // Given
             LoginCommand command = new LoginCommand(
                     "test@test.com",
