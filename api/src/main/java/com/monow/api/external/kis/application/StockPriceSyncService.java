@@ -2,8 +2,8 @@ package com.monow.api.external.kis.application;
 
 import com.monow.api.external.kis.client.KisDailyPriceClient;
 import com.monow.api.external.kis.client.KisTokenClient;
-import com.monow.api.external.kis.dto.KisDailyPriceResponse;
-import com.monow.api.external.kis.dto.KisTokenResponse;
+import com.monow.api.external.kis.dto.response.KisDailyPriceResponse;
+import com.monow.api.external.kis.dto.response.KisTokenResponse;
 import com.monow.api.external.kis.mapper.KisDailyPriceMapper;
 import com.monow.domain.stock.entity.Stock;
 import com.monow.domain.stock.entity.StockPriceDaily;
@@ -14,8 +14,6 @@ import com.monow.global.error.model.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor

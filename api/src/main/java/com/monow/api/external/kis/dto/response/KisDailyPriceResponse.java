@@ -1,4 +1,4 @@
-package com.monow.api.external.kis.dto;
+package com.monow.api.external.kis.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.hibernate.result.Output;

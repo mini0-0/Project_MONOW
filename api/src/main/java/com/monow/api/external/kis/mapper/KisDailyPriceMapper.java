@@ -1,6 +1,6 @@
 package com.monow.api.external.kis.mapper;
 
-import com.monow.api.external.kis.dto.KisDailyPriceResponse;
+import com.monow.api.external.kis.dto.response.KisDailyPriceResponse;
 import com.monow.domain.stock.entity.Stock;
 import com.monow.domain.stock.entity.StockPriceDaily;
 import org.springframework.stereotype.Component;
