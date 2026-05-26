@@ -1,4 +1,4 @@
-package com.monow.api.external.kis.service;
+package com.monow.api.external.kis.application;
 
 import com.monow.api.external.kis.client.KisDailyPriceClient;
 import com.monow.api.external.kis.client.KisTokenClient;
@@ -9,7 +9,6 @@ import com.monow.domain.stock.entity.Stock;
 import com.monow.domain.stock.entity.StockPriceDaily;
 import com.monow.domain.stock.repository.StockPriceDailyRepository;
 import com.monow.domain.stock.repository.StockRepository;
-import com.monow.api.external.kis.application.StockPriceSyncService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -52,8 +51,8 @@ public class StockPriceSyncServiceTest {
     class SyncDailyPrice {
 
         @Test
-        @DisplayName("일별 시세를 수집하여 stock_price_daily에 저장")
-        void syncDailyPrice_success() {
+        @DisplayName("[성공] - 일별 시세를 수집하여 stock_price_daily에 저장")
+        void syncDailyPrice_whenDailyPriceDoesNotExist_savesNewDailyPrice() {
             // Given
 
             String accessToken = "acceess_token";
