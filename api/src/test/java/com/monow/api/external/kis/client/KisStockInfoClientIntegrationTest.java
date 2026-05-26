@@ -26,8 +26,8 @@ public class KisStockInfoClientIntegrationTest {
     class StockApi {
 
         @Test
-        @DisplayName("삼성전자 종목 정보 조회 성공")
-        void fetchStockInfo_success() {
+        @DisplayName("[성공] - 삼성전자 종목 정보 조회")
+        void fetchStockInfo_whenValidStockCodeProvided_returnsStockInfo() {
 
             // Given
             KisTokenResponse tokenResponse = kisTokenClient.issueToken();

@@ -26,8 +26,8 @@ public class KisDailyPriceClientIntegrationTest {
     class DailyPriceApi{
 
         @Test
-        @DisplayName("삼성전자 일별 시세 조회 성공")
-        void fetchDailyPrice_success() {
+        @DisplayName("[성공] - 삼성전자 일별 시세 조회")
+        void fetchDailyPrice_whenValidStockCodeProvided_returnsDailyPrices() {
             // Given
             KisTokenResponse tokenResponse = kisTokenClient.issueToken();
             String accessToken = tokenResponse.accessToken();

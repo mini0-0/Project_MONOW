@@ -20,8 +20,8 @@ public class KisTokenClientIntegrationTest {
     class KisApi {
 
         @Test
-        @DisplayName("access token 발급")
-        void kisAccessToken() {
+        @DisplayName("[성공] - access token 발급")
+        void issueToken_whenKisApiRespondsSuccessfully_returnsAccessToken() {
             // Given
 
             // When
