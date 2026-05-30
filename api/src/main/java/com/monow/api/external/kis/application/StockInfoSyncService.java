@@ -1,9 +1,7 @@
 package com.monow.api.external.kis.application;
 
 import com.monow.api.external.kis.client.KisStockInfoClient;
-import com.monow.api.external.kis.client.KisTokenClient;
 import com.monow.api.external.kis.dto.response.KisStockInfoResponse;
-import com.monow.api.external.kis.dto.response.KisTokenResponse;
 import com.monow.api.external.kis.mapper.KisStockInfoMapper;
 import com.monow.domain.stock.entity.Stock;
 import com.monow.domain.stock.repository.StockRepository;
@@ -19,7 +17,7 @@ public class StockInfoSyncService {
 
     private final StockRepository stockRepository;
 
-    private final KisTokenClient kisTokenClient;
+    private final KisAccessTokenProvider kisAccessTokenProvider;
 
     private final KisStockInfoClient kisStockInfoClient;
 
@@ -32,8 +30,7 @@ public class StockInfoSyncService {
             return;
         }
 
-        KisTokenResponse tokenResponse = kisTokenClient.issueToken();
-        String accessToken = tokenResponse.accessToken();
+        String accessToken = kisAccessTokenProvider.getAccessToken();
 
         KisStockInfoResponse response = kisStockInfoClient.fetchStockInfo(accessToken, stockCode);
 
