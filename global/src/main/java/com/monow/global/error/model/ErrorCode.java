@@ -11,7 +11,10 @@ public enum ErrorCode {
     DUPLICATED_NICKNAME(HttpStatus.CONFLICT, "DUPLICATED_NICKNAME", "이미 사용 중인 닉네임입니다."),
     LOGIN_FAIL(HttpStatus.UNAUTHORIZED, "LOGIN_FAIL", "이메일 또는 비밀번호가 일치하지 않습니다."),
     STOCK_NOT_FOUND(HttpStatus.BAD_REQUEST, "STOCK_NOT_FOUND", "존재하지 않은 종목코드입니다."),
-    STOCK_INFO_FETCH_FAILED(HttpStatus.BAD_GATEWAY, "STOCK_INFO_FETCH_FAILED", "한국투자 종목 정보 조회에 실패했습니다.")
+    STOCK_INFO_FETCH_FAILED(HttpStatus.BAD_GATEWAY, "STOCK_INFO_FETCH_FAILED", "한국투자 종목 정보 조회에 실패했습니다."),
+    STOCK_MASTER_DOWNLOAD_FAILED(HttpStatus.BAD_GATEWAY,"STOCK_MASTER_DOWNLOAD_FAILED", "한국투자 국내주식 종목 파일 다운로드에 실패했습니다."),
+    STOCK_MASTER_EXTRACT_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "STOCK_MASTER_EXTRACT_FAILED", "한국투자 국내주식 종목 파일 압축 해제에 실패했습니다."),
+    STOCK_MASTER_PARSE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "STOCK_MASTER_PARSE_FAILED", "")
     ;
 
     private final HttpStatus status;
