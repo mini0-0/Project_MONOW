@@ -5,6 +5,8 @@ import com.monow.api.external.kis.stockmaster.DomesticStockMarketType;
 import com.monow.api.external.kis.stockmaster.KisStockMasterDownloader;
 import com.monow.api.external.kis.stockmaster.KisStockMasterExtractor;
 import com.monow.api.external.kis.stockmaster.KisStockMasterParser;
+import com.monow.domain.stock.entity.Stock;
+import com.monow.domain.stock.repository.StockRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -18,10 +20,10 @@ import java.util.List;
 import java.util.Map;
 
 
+import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class DomesticStockSyncServiceTest {
@@ -37,6 +39,9 @@ public class DomesticStockSyncServiceTest {
 
     @Mock
     private StockInfoSyncService stockInfoSyncService;
+
+    @Mock
+    private StockRepository stockRepository;
 
     @InjectMocks
     private DomesticStockSyncService domesticStockSyncService;
@@ -66,6 +71,20 @@ public class DomesticStockSyncServiceTest {
             stockCodes.put(DomesticStockMarketType.NXT_KOSPI, List.of("005930"));
             stockCodes.put(DomesticStockMarketType.NXT_KOSDAQ, List.of("035720"));
 
+            Stock existingStock = Stock.createStock(
+                    "00000A005930",
+                    "KR7005930003",
+                    "005930",
+                    "삼성전자보통주",
+                    "삼성전자",
+                    "DOMESTIC_STOCK",
+                    "300",
+                    "101010",
+                    "주권",
+                    "1010",
+                    "주식"
+            );
+
 
             given(kisStockMasterDownloader.downloaderDomesticStock())
                     .willReturn(zipFiles);
@@ -76,6 +95,11 @@ public class DomesticStockSyncServiceTest {
             given(kisStockMasterParser.parseStockCodes(mstFiles))
                     .willReturn(stockCodes);
 
+            // DB에 005930만 저장 되어 있다고 가정
+            given(stockRepository.findByStockCodeIn(anyCollection()))
+                    .willReturn(List.of(existingStock));
+
+
 
             // When
             domesticStockSyncService.syncDomesticStocks();
@@ -85,9 +109,11 @@ public class DomesticStockSyncServiceTest {
             verify(kisStockMasterExtractor).extractMstFiles(zipFiles);
             verify(kisStockMasterParser).parseStockCodes(mstFiles);
 
-            verify(stockInfoSyncService).syncStockInfo("005930");
+            verify(stockInfoSyncService, never()).syncStockInfo("005930");
+
             verify(stockInfoSyncService).syncStockInfo("000660");
             verify(stockInfoSyncService).syncStockInfo("035720");
+
             verify(stockInfoSyncService, times(3)).syncStockInfo(any());
 
 

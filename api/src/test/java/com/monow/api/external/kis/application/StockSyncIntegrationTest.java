@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -20,12 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest
 @Transactional
 public class StockSyncIntegrationTest {
-
-    @Autowired
-    private KisTokenClient kisTokenClient;
-
-    @Autowired
-    private KisStockInfoMapper kisStockInfoMapper;
 
     @Autowired
     private StockInfoSyncService stockInfoSyncService;
@@ -47,11 +42,11 @@ public class StockSyncIntegrationTest {
             stockInfoSyncService.syncStockInfo(stockCode);
 
             // Then
-            Optional<Stock> savedStock = stockRepository.findByStockCode(stockCode);
+            List<Stock> savedStocks = stockRepository.findByStockCodeIn(List.of(stockCode));
 
-            assertThat(savedStock).isPresent();
+            assertThat(savedStocks).hasSize(1);
 
-            Stock stock = savedStock.get();
+            Stock stock = savedStocks.get(0);
 
             assertThat(stock.getStockCode()).isEqualTo("005930");
             assertThat(stock.getStockName()).isNotBlank();
@@ -61,6 +56,7 @@ public class StockSyncIntegrationTest {
             assertThat(stock.getMarketType()).isEqualTo("DOMESTIC_STOCK");
             assertThat(stock.getIsActive()).isTrue();
 
+            log.info("saved stockCode={}, stockName={}", stock.getStockCode(), stock.getStockName());
 
         }
 

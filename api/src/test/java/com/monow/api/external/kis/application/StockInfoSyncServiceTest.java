@@ -33,7 +33,7 @@ public class StockInfoSyncServiceTest {
     private StockRepository stockRepository;
 
     @Mock
-    private KisTokenClient kisTokenClient;
+    private KisAccessTokenProvider kisAccessTokenProvider;
 
     @Mock
     private KisStockInfoClient kisStockInfoClient;
@@ -95,8 +95,8 @@ public class StockInfoSyncServiceTest {
             given(stockRepository.existsByStockCode(STOCK_CODE))
                     .willReturn(false);
 
-            given(kisTokenClient.issueToken())
-                    .willReturn(tokenResponse);
+            given(kisAccessTokenProvider.getAccessToken())
+                    .willReturn(ACCESS_TOKEN);
 
             given(kisStockInfoClient.fetchStockInfo(ACCESS_TOKEN, STOCK_CODE))
                     .willReturn(response);
@@ -110,7 +110,7 @@ public class StockInfoSyncServiceTest {
 
             // Then
             verify(stockRepository).existsByStockCode(STOCK_CODE);
-            verify(kisTokenClient).issueToken();
+            verify(kisAccessTokenProvider).getAccessToken();
             verify(kisStockInfoClient).fetchStockInfo(ACCESS_TOKEN, STOCK_CODE);
             verify(kisStockInfoMapper).toEntity(output);
             verify(stockRepository).save(stock);
@@ -129,7 +129,7 @@ public class StockInfoSyncServiceTest {
 
             // Then
             verify(stockRepository).existsByStockCode(STOCK_CODE);
-            verify(kisTokenClient, never()).issueToken();
+            verify(kisAccessTokenProvider, never()).getAccessToken();
             verify(kisStockInfoClient, never()).fetchStockInfo(any(), any());
             verify(kisStockInfoMapper, never()).toEntity(any());
             verify(stockRepository, never()).save(any());
@@ -152,8 +152,8 @@ public class StockInfoSyncServiceTest {
                     "종목 정보 조회 실패",
                     null
             );
-            given(kisTokenClient.issueToken())
-                    .willReturn(tokenResponse);
+            given(kisAccessTokenProvider.getAccessToken())
+                    .willReturn(ACCESS_TOKEN);
 
             given(kisStockInfoClient.fetchStockInfo(ACCESS_TOKEN, STOCK_CODE))
                     .willReturn(failResponse);
@@ -167,7 +167,7 @@ public class StockInfoSyncServiceTest {
                                 .isEqualTo(ErrorCode.STOCK_INFO_FETCH_FAILED);
                     });
             verify(stockRepository).existsByStockCode(STOCK_CODE);
-            verify(kisTokenClient).issueToken();
+            verify(kisAccessTokenProvider).getAccessToken();
             verify(kisStockInfoClient).fetchStockInfo(ACCESS_TOKEN, STOCK_CODE);
             verify(kisStockInfoMapper, never()).toEntity(any());
             verify(stockRepository, never()).save(any());
@@ -190,8 +190,8 @@ public class StockInfoSyncServiceTest {
                     "정상처리 되었습니다.",
                     null
             );
-            given(kisTokenClient.issueToken())
-                    .willReturn(tokenResponse);
+            given(kisAccessTokenProvider.getAccessToken())
+                    .willReturn(ACCESS_TOKEN);
 
             given(kisStockInfoClient.fetchStockInfo(ACCESS_TOKEN, STOCK_CODE))
                     .willReturn(response);
@@ -205,7 +205,7 @@ public class StockInfoSyncServiceTest {
                                 .isEqualTo(ErrorCode.STOCK_INFO_FETCH_FAILED);
                     });
             verify(stockRepository).existsByStockCode(STOCK_CODE);
-            verify(kisTokenClient).issueToken();
+            verify(kisAccessTokenProvider).getAccessToken();
             verify(kisStockInfoClient).fetchStockInfo(ACCESS_TOKEN, STOCK_CODE);
             verify(kisStockInfoMapper, never()).toEntity(any());
             verify(stockRepository, never()).save(any());

@@ -1,9 +1,7 @@
 package com.monow.api.external.kis.application;
 
 import com.monow.api.external.kis.client.KisDailyPriceClient;
-import com.monow.api.external.kis.client.KisTokenClient;
 import com.monow.api.external.kis.dto.response.KisDailyPriceResponse;
-import com.monow.api.external.kis.dto.response.KisTokenResponse;
 import com.monow.api.external.kis.mapper.KisDailyPriceMapper;
 import com.monow.domain.stock.entity.Stock;
 import com.monow.domain.stock.entity.StockPriceDaily;
@@ -20,8 +18,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
@@ -29,13 +27,10 @@ import static org.mockito.Mockito.verify;
 public class StockPriceSyncServiceTest {
 
     @Mock
-    private StockRepository stockRepository;
-
-    @Mock
     private StockPriceDailyRepository stockPriceDailyRepository;
 
     @Mock
-    private KisTokenClient kisTokenClient;
+    private KisAccessTokenProvider kisAccessTokenProvider;
 
     @Mock
     private KisDailyPriceClient kisDailyPriceClient;
@@ -45,6 +40,10 @@ public class StockPriceSyncServiceTest {
 
     @InjectMocks
     private StockPriceSyncService stockPriceSyncService;
+
+    @Mock
+    private StockRepository stockRepository;
+
 
     @Nested
     @DisplayName("일별 시세 동기화")
@@ -73,11 +72,6 @@ public class StockPriceSyncServiceTest {
                     "주식"
             );
 
-            KisTokenResponse tokenResponse = new KisTokenResponse(
-                    accessToken,
-                    "Bearer",
-                    86400L
-            );
 
             KisDailyPriceResponse.Output output = new KisDailyPriceResponse.Output(
                     "20260514",
@@ -105,11 +99,11 @@ public class StockPriceSyncServiceTest {
                     12345678L
             );
 
-            given(stockRepository.findByStockCode(stockCode))
-                    .willReturn(Optional.of(stock));
+            given(stockRepository.findAll())
+                    .willReturn(List.of(stock));
 
-            given(kisTokenClient.issueToken())
-                    .willReturn(tokenResponse);
+            given(kisAccessTokenProvider.getAccessToken())
+                    .willReturn(accessToken);
 
             given(kisDailyPriceClient.fetchDailyPrice(accessToken, stockCode))
                     .willReturn(kisResponse);
@@ -117,20 +111,26 @@ public class StockPriceSyncServiceTest {
             given(kisDailyPriceMapper.toEntity(stock, output))
                     .willReturn(stockPriceDaily);
 
-            given(stockPriceDailyRepository.existsByStockAndTradeDate(stock, tradeDate))
-                    .willReturn(false);
+
+            given(stockPriceDailyRepository.findByStockAndTradeDateIn(
+                    eq(stock),
+                    anyCollection()
+            )).willReturn(List.of());
 
 
             // When
-            stockPriceSyncService.syncDailyPrice(stockCode);
+            stockPriceSyncService.syncDailyPrices();
 
             // Then
-            verify(stockRepository).findByStockCode(stockCode);
-            verify(kisTokenClient).issueToken();
+            verify(stockRepository).findAll();
+            verify(kisAccessTokenProvider).getAccessToken();
             verify(kisDailyPriceClient).fetchDailyPrice(accessToken, stockCode);
             verify(kisDailyPriceMapper).toEntity(stock, output);
-            verify(stockPriceDailyRepository).existsByStockAndTradeDate(stock, tradeDate);
-            verify(stockPriceDailyRepository).save(stockPriceDaily);
+            verify(stockPriceDailyRepository).findByStockAndTradeDateIn(
+                    eq(stock),
+                    anyCollection()
+            );
+            verify(stockPriceDailyRepository).saveAll(anyList());
 
             }
     }
