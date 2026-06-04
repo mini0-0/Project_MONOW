@@ -8,12 +8,11 @@ import com.monow.domain.stock.entity.Stock;
 import com.monow.domain.stock.repository.StockRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
-
-import static java.lang.Thread.sleep;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -26,9 +25,8 @@ public class DomesticStockSyncService {
     private final KisStockMasterParser kisStockMasterParser;
 
     private final StockInfoSyncService stockInfoSyncService;
+    private final StockRepository stockRepository;
 
-
-    @Transactional
     public void syncDomesticStocks() {
         Map<DomesticStockMarketType, byte[]> zipFiles =
                 kisStockMasterDownloader.downloaderDomesticStock();
@@ -45,7 +43,16 @@ public class DomesticStockSyncService {
                 .distinct()
                 .toList();
 
-        for (String stockCode : distinctStockCodes) {
+        Set<String> existStockCodes = stockRepository.findByStockCodeIn(distinctStockCodes)
+                .stream()
+                .map(Stock::getStockCode)
+                .collect(Collectors.toSet());
+
+        List<String> targetStockCodes = distinctStockCodes.stream()
+                .filter(stockCode -> !existStockCodes.contains(stockCode))
+                .toList();
+
+        for (String stockCode : targetStockCodes) {
             stockInfoSyncService.syncStockInfo(stockCode);
             sleep(50);
         }

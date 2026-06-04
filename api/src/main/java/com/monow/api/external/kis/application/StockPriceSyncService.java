@@ -1,9 +1,7 @@
 package com.monow.api.external.kis.application;
 
 import com.monow.api.external.kis.client.KisDailyPriceClient;
-import com.monow.api.external.kis.client.KisTokenClient;
 import com.monow.api.external.kis.dto.response.KisDailyPriceResponse;
-import com.monow.api.external.kis.dto.response.KisTokenResponse;
 import com.monow.api.external.kis.mapper.KisDailyPriceMapper;
 import com.monow.domain.stock.entity.Stock;
 import com.monow.domain.stock.entity.StockPriceDaily;
@@ -13,7 +11,12 @@ import com.monow.global.error.exception.BusinessException;
 import com.monow.global.error.model.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 
 @Service
 @RequiredArgsConstructor
@@ -23,36 +26,61 @@ public class StockPriceSyncService {
 
     private final StockPriceDailyRepository stockPriceDailyRepository;
 
-    private final KisTokenClient kisTokenClient;
+    private final KisAccessTokenProvider kisAccessTokenProvider;
 
     private final KisDailyPriceClient kisDailyPriceClient;
 
     private final KisDailyPriceMapper kisDailyPriceMapper;
 
-    @Transactional
-    public void syncDailyPrice(String stockCode) {
-        Stock stock = stockRepository.findByStockCode(stockCode)
-                .orElseThrow(() -> new BusinessException(ErrorCode.STOCK_NOT_FOUND));
+    public void syncDailyPrices() {
+        List<Stock> stocks = stockRepository.findAll();
 
-        KisTokenResponse tokenResponse = kisTokenClient.issueToken();
-        String accessToken = tokenResponse.accessToken();
+        for (Stock stock : stocks) {
+            syncDailyPrice(stock);
+            sleep(50);
+        }
+    }
 
-        KisDailyPriceResponse response = kisDailyPriceClient.fetchDailyPrice(accessToken, stockCode);
+    private void syncDailyPrice(Stock stock) {
+        String stockCode = stock.getStockCode();
 
-        for (KisDailyPriceResponse.Output output: response.output()) {
-            StockPriceDaily stockPriceDaily = kisDailyPriceMapper.toEntity(stock, output);
+        String accessToken = kisAccessTokenProvider.getAccessToken();
 
-            boolean exists = stockPriceDailyRepository.existsByStockAndTradeDate(
-                    stock,
-                    stockPriceDaily.getTradeDate()
-            );
+        KisDailyPriceResponse response =
+                kisDailyPriceClient.fetchDailyPrice(accessToken, stockCode);
 
-            if (!exists) {
-                stockPriceDailyRepository.save(stockPriceDaily);
-            }
-
+        if (response == null || response.output() == null) {
+            throw new BusinessException(ErrorCode.STOCK_DAILY_PRICE_FETCH_FAILED);
         }
 
+        List<StockPriceDaily> dailyPrices = response.output()
+                .stream()
+                .map(output -> kisDailyPriceMapper.toEntity(stock, output))
+                .toList();
 
+        List<LocalDate> tradeDates = dailyPrices.stream()
+                .map(StockPriceDaily::getTradeDate)
+                .toList();
+
+        Set<LocalDate> existTradeDates = stockPriceDailyRepository
+                .findByStockAndTradeDateIn(stock, tradeDates)
+                .stream()
+                .map(StockPriceDaily::getTradeDate)
+                .collect(Collectors.toSet());
+
+        List<StockPriceDaily> newDailyPrices = dailyPrices.stream()
+                .filter(dailyPrice -> !existTradeDates.contains(dailyPrice.getTradeDate()))
+                .toList();
+
+        stockPriceDailyRepository.saveAll(newDailyPrices);
+    }
+
+    private void sleep(long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("일별 시세 동기화 작업이 중단되었습니다.", e);
+        }
     }
 }

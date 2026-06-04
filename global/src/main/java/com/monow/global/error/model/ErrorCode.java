@@ -14,8 +14,8 @@ public enum ErrorCode {
     STOCK_INFO_FETCH_FAILED(HttpStatus.BAD_GATEWAY, "STOCK_INFO_FETCH_FAILED", "한국투자 종목 정보 조회에 실패했습니다."),
     STOCK_MASTER_DOWNLOAD_FAILED(HttpStatus.BAD_GATEWAY,"STOCK_MASTER_DOWNLOAD_FAILED", "한국투자 국내주식 종목 파일 다운로드에 실패했습니다."),
     STOCK_MASTER_EXTRACT_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "STOCK_MASTER_EXTRACT_FAILED", "한국투자 국내주식 종목 파일 압축 해제에 실패했습니다."),
-    STOCK_MASTER_PARSE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "STOCK_MASTER_PARSE_FAILED", "")
-    ;
+    STOCK_MASTER_PARSE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "STOCK_MASTER_PARSE_FAILED", "한국투자 국내주식 종목 파일 파싱에 실패했습니다."),
+    STOCK_DAILY_PRICE_FETCH_FAILED(HttpStatus.INTERNAL_SERVER_ERROR,"STOCK_DAILY_PRICE_FETCH_FAILED" ,"한국투자 일봉 시세 조회에 실패했습니다." );
 
     private final HttpStatus status;
 
