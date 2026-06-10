@@ -13,4 +13,9 @@ public interface StockRepository extends JpaRepository<Stock, Long> {
     Boolean existsByStockCode(String stockCode);
 
     long countByStockCode(String stockCode);
+
+    List<Stock> findByStockCodeInAndProductClassCodeNot(
+            List<String> stockCodes,
+            String productClassCode
+    );
 }
