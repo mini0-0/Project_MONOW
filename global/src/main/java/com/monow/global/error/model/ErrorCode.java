@@ -15,7 +15,9 @@ public enum ErrorCode {
     STOCK_MASTER_DOWNLOAD_FAILED(HttpStatus.BAD_GATEWAY,"STOCK_MASTER_DOWNLOAD_FAILED", "한국투자 국내주식 종목 파일 다운로드에 실패했습니다."),
     STOCK_MASTER_EXTRACT_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "STOCK_MASTER_EXTRACT_FAILED", "한국투자 국내주식 종목 파일 압축 해제에 실패했습니다."),
     STOCK_MASTER_PARSE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "STOCK_MASTER_PARSE_FAILED", "한국투자 국내주식 종목 파일 파싱에 실패했습니다."),
-    STOCK_DAILY_PRICE_FETCH_FAILED(HttpStatus.INTERNAL_SERVER_ERROR,"STOCK_DAILY_PRICE_FETCH_FAILED" ,"한국투자 일봉 시세 조회에 실패했습니다." );
+    STOCK_DAILY_PRICE_FETCH_FAILED(HttpStatus.INTERNAL_SERVER_ERROR,"STOCK_DAILY_PRICE_FETCH_FAILED" ,"한국투자 일봉 시세 조회에 실패했습니다." ),
+    KIS_TOP_VIEW_INVALID_RESPONSE(HttpStatus.BAD_GATEWAY, "KIS_TOP_VIEW_INVALID_RESPONSE", "HTS종목 상위 20 종목 응답 형식이 올바르지 않습니다."),
+    KIS_TOP_VIEW_API_FAILED(HttpStatus.BAD_GATEWAY, "KIS_TOP_VIEW_API_FAILED", "HTS종목 상위 20 종목 응답 API 호출에 실패했습니다.");
 
     private final HttpStatus status;
 
