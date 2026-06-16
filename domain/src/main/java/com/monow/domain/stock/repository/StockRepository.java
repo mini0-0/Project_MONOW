@@ -10,6 +10,8 @@ import java.util.Optional;
 public interface StockRepository extends JpaRepository<Stock, Long> {
     List<Stock> findByStockCodeIn(Collection<String> stockCodes);
 
+    Optional<Stock> findByStockCode(String stockCode);
+
     Boolean existsByStockCode(String stockCode);
 
     long countByStockCode(String stockCode);
