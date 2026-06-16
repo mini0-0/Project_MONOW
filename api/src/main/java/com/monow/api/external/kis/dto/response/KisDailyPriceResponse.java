@@ -1,8 +1,6 @@
 package com.monow.api.external.kis.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.hibernate.result.Output;
-
 import java.util.List;
 
 public record KisDailyPriceResponse(
