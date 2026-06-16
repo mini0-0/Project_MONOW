@@ -54,7 +54,7 @@ public class StockPriceSyncServiceTest {
         void syncDailyPrice_whenDailyPriceDoesNotExist_savesNewDailyPrice() {
             // Given
 
-            String accessToken = "acceess_token";
+            String accessToken = "access_token";
             String stockCode = "005930";
             LocalDate tradeDate = LocalDate.of(2026,5,20);
 

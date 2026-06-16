@@ -2,8 +2,6 @@ package com.monow.api.external.kis.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.List;
-
 public record KisStockInfoResponse(
         @JsonProperty("rt_cd")
         String rtCd,

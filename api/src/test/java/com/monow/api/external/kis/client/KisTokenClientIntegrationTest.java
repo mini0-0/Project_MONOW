@@ -1,5 +1,6 @@
 package com.monow.api.external.kis.client;
 
+import com.monow.api.external.kis.application.KisAccessTokenProvider;
 import com.monow.api.external.kis.dto.response.KisTokenResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -13,7 +14,6 @@ public class KisTokenClientIntegrationTest {
 
     @Autowired
     private KisTokenClient kisTokenClient;
-
 
     @Nested
     @DisplayName("한국투자증권 API 연동")
