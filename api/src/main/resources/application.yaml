@@ -17,6 +17,11 @@ spring:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
 kis:
   base-url: "https://openapi.koreainvestment.com:9443"
   app-key: ${KIS_APP_KEY}
