@@ -34,6 +34,7 @@ import org.springframework.http.HttpStatus;
 
 @Getter
 public enum ErrorCode {
+    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_NOT_FOUND", "사용자를 찾을 수 없습니다."),
     INVALID_REQUEST(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "요청 값이 올바르지 않습니다."),
     PASSWORD_CONFIRM_MISMATCH(HttpStatus.BAD_REQUEST, "PASSWORD_CONFIRM_MISMATCH", "비밀번호가 일치하지 않습니다."),
     DUPLICATED_EMAIL(HttpStatus.CONFLICT, "DUPLICATED_EMAIL", "이미 가입된 이메일입니다."),
@@ -49,6 +50,7 @@ public enum ErrorCode {
     KIS_TOP_VIEW_API_FAILED(HttpStatus.BAD_GATEWAY, "KIS_TOP_VIEW_API_FAILED", "HTS종목 상위 20 종목 응답 API 호출에 실패했습니다."),
     KIS_CURRENT_PRICE_FETCH_FAILED(HttpStatus.BAD_GATEWAY, "KIS_CURRENT_PRICE_FETCH_FAILED", "현재가 조회에 실패했습니다."),
     KIS_CURRENT_PRICE_INVALID_RESPONSE(HttpStatus.BAD_GATEWAY, "KIS_CURRENT_PRICE_INVALID_RESPONSE", "현재가 응답 데이터가 올바르지 않습니다.");
+
     private final HttpStatus status;
 
     private final String code;
