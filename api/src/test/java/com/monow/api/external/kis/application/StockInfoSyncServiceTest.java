@@ -1,7 +1,6 @@
 package com.monow.api.external.kis.application;
 
 import com.monow.api.external.kis.client.KisStockInfoClient;
-import com.monow.api.external.kis.client.KisTokenClient;
 import com.monow.api.external.kis.dto.response.KisStockInfoResponse;
 import com.monow.api.external.kis.dto.response.KisTokenResponse;
 import com.monow.api.external.kis.mapper.KisStockInfoMapper;

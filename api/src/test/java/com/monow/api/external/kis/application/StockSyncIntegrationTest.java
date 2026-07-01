@@ -1,7 +1,5 @@
 package com.monow.api.external.kis.application;
 
-import com.monow.api.external.kis.client.KisTokenClient;
-import com.monow.api.external.kis.mapper.KisStockInfoMapper;
 import com.monow.domain.stock.entity.Stock;
 import com.monow.domain.stock.repository.StockRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +11,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
