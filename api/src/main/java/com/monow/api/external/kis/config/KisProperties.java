@@ -13,10 +13,11 @@ public class KisProperties {
 
     private String baseUrl;
 
+    private String websocketUrl;
+
     private String appKey;
 
     private String appSecret;
-
 
 
 }

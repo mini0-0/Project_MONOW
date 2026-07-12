@@ -4,12 +4,9 @@ import com.monow.api.external.kis.type.CurrentPriceMarketType;
 
 import java.time.LocalDateTime;
 
-public record StockCurrentPriceResponse(
+public record RealtimeStockPriceResponse(
         CurrentPriceMarketType marketType,
         String stockCode,
-        String stockName,
-        String marketName,
-        String industryName,
         String currentPrice,
         String changePrice,
         String changeSign,
@@ -19,6 +16,7 @@ public record StockCurrentPriceResponse(
         String openPrice,
         String highPrice,
         String lowPrice,
+        String tradeTime,
         LocalDateTime updatedAt
 ) {
 }
