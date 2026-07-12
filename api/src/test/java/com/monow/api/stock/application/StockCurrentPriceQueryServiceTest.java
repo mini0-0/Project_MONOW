@@ -1,15 +1,18 @@
-package com.monow.api.external.kis.application;
+package com.monow.api.stock.application;
 
+import com.monow.api.external.kis.application.KisAccessTokenProvider;
 import com.monow.api.external.kis.client.KisCurrentPriceClient;
 import com.monow.api.external.kis.dto.response.KisCurrentPriceResponse;
 import com.monow.api.external.kis.type.CurrentPriceMarketType;
 import com.monow.api.stock.application.StockCurrentPriceQueryService;
+import com.monow.api.stock.dto.StockMetadata;
 import com.monow.api.stock.dto.response.StockCurrentPriceResponse;
 import com.monow.domain.stock.entity.Stock;
 import com.monow.domain.stock.repository.StockRepository;
 import com.monow.global.error.exception.BusinessException;
 import com.monow.global.error.model.ErrorCode;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -17,6 +20,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,6 +40,9 @@ import static org.mockito.Mockito.verify;
 public class StockCurrentPriceQueryServiceTest {
 
     @Mock
+    private StockMetadataCacheService stockMetadataCacheService;
+
+    @Mock
     private KisAccessTokenProvider kisAccessTokenProvider;
 
     @Mock
@@ -43,6 +54,21 @@ public class StockCurrentPriceQueryServiceTest {
     @InjectMocks
     private StockCurrentPriceQueryService stockCurrentPriceQueryService;
 
+    @BeforeEach
+    void setUp() {
+        Clock fixedClock = Clock.fixed(
+                Instant.parse("2026-06-06T00:00:16Z"),
+                ZoneId.of("Asia/Seoul")
+        );
+
+        stockCurrentPriceQueryService = new StockCurrentPriceQueryService(
+                stockMetadataCacheService,
+                stockRepository,
+                kisAccessTokenProvider,
+                kisCurrentPriceClient,
+                fixedClock
+        );
+    }
 
     @Nested
     @DisplayName("현재가 조회")
@@ -52,23 +78,14 @@ public class StockCurrentPriceQueryServiceTest {
         @DisplayName("[성공] - 종목코드(stockCode)로 KRX 현재가를 조회하면 종목명과 현재가 정보를 반환")
         void currentPrice_whenValidStockCodeProvided_returnsCurrentPrice() {
             // Given
+            CurrentPriceMarketType marketType = CurrentPriceMarketType.KRX;
             String accessToken = "access_token";
             String stockCode = "005930";
 
-            Stock stock = Stock.createStock(
-                    "00000A005930",
-                    "KR7005930003",
+            StockMetadata metadata = new StockMetadata(
                     stockCode,
-                    "삼성전자보통주",
-                    "삼성전자",
-                    "DOMESTIC_STOCK",
-                    "300",
-                    "101010",
-                    "주권",
-                    "1010",
-                    "주식"
+                    "삼성전자"
             );
-
 
             KisCurrentPriceResponse.Output output = new KisCurrentPriceResponse.Output(
                     "005930",
@@ -93,15 +110,15 @@ public class StockCurrentPriceQueryServiceTest {
             );
 
 
-            given(stockRepository.findByStockCode(stockCode))
-                    .willReturn(Optional.of(stock));
+            given(stockMetadataCacheService.getMetadata(stockCode))
+                    .willReturn(metadata);
             given(kisAccessTokenProvider.getAccessToken())
                     .willReturn(accessToken);
-            given(kisCurrentPriceClient.fetchCurrentPrice(accessToken,stockCode, CurrentPriceMarketType.KRX))
+            given(kisCurrentPriceClient.fetchCurrentPrice(accessToken,stockCode, marketType))
                     .willReturn(kisResponse);
 
             // When
-            StockCurrentPriceResponse response = stockCurrentPriceQueryService.getCurrentPrice(stockCode, CurrentPriceMarketType.KRX);
+            StockCurrentPriceResponse response = stockCurrentPriceQueryService.getCurrentPrice(marketType, stockCode);
 
             // Then
             assertThat(response.stockCode()).isEqualTo("005930");
@@ -118,14 +135,17 @@ public class StockCurrentPriceQueryServiceTest {
             assertThat(response.highPrice()).isEqualTo("339000");
             assertThat(response.lowPrice()).isEqualTo("320000");
             assertThat(response.updatedAt()).isNotNull();
+            assertThat(response.updatedAt()).isEqualTo(
+                    LocalDateTime.of(2026, 6, 6, 9, 0, 16)
+            );
+
 
             log.info("현재가 조회 성공 response={}", response);
 
-            verify(stockRepository).findByStockCode(stockCode);
+            verify(stockMetadataCacheService).getMetadata(stockCode);
             verify(kisAccessTokenProvider).getAccessToken();
             verify(kisCurrentPriceClient).fetchCurrentPrice(accessToken, stockCode, CurrentPriceMarketType.KRX);
-
-
+            verify(stockRepository, never()).findByStockCode(stockCode);
 
         }
 
@@ -134,44 +154,40 @@ public class StockCurrentPriceQueryServiceTest {
         @DisplayName("[예외] - 존재하지 않는 종목코드면 현재가를 조회하지 않음")
         void currentPrice_whenStockDoesNotExist_throwsException() {
             // Given
+            CurrentPriceMarketType marketType = CurrentPriceMarketType.KRX;
             String stockCode = "000000";
 
-            given(stockRepository.findByStockCode(stockCode))
-                    .willReturn(Optional.empty());
+            given(stockMetadataCacheService.getMetadata(stockCode))
+                    .willThrow(new BusinessException(ErrorCode.STOCK_NOT_FOUND));
 
             // When & Then
             BusinessException exception = assertThrows(
                     BusinessException.class,
                     () -> stockCurrentPriceQueryService.getCurrentPrice(
-                            stockCode,
-                            CurrentPriceMarketType.KRX)
+                            marketType,
+                            stockCode
+                            )
             );
 
-            verify(stockRepository).findByStockCode(stockCode);
+            verify(stockMetadataCacheService).getMetadata(stockCode);
             verify(kisAccessTokenProvider, never()).getAccessToken();
             verify(kisCurrentPriceClient, never())
                     .fetchCurrentPrice(anyString(), anyString(), any(CurrentPriceMarketType.class));
+            verify(stockRepository, never()).findByStockCode(stockCode);
+
         }
 
         @Test
         @DisplayName("[예외] - KIS 현재가 응답 코드가 실패면 현재가를 반환하지 않음")
         void currentPrice_whenKisResponseFails_throwsException() {
             // Given
+            CurrentPriceMarketType marketType = CurrentPriceMarketType.KRX;
             String accessToken = "access_token";
             String stockCode = "005930";
 
-            Stock stock = Stock.createStock(
-                    "00000A005930",
-                    "KR7005930003",
+            StockMetadata metadata = new StockMetadata(
                     stockCode,
-                    "삼성전자보통주",
-                    "삼성전자",
-                    "DOMESTIC_STOCK",
-                    "300",
-                    "101010",
-                    "주권",
-                    "1010",
-                    "주식"
+                    "삼성전자"
             );
 
             KisCurrentPriceResponse kisResponse = new KisCurrentPriceResponse(
@@ -181,8 +197,8 @@ public class StockCurrentPriceQueryServiceTest {
                     null
             );
 
-            given(stockRepository.findByStockCode(stockCode))
-                    .willReturn(Optional.of(stock));
+            given(stockMetadataCacheService.getMetadata(stockCode))
+                    .willReturn(metadata);
 
             given(kisAccessTokenProvider.getAccessToken())
                     .willReturn(accessToken);
@@ -194,8 +210,8 @@ public class StockCurrentPriceQueryServiceTest {
             BusinessException exception = assertThrows(
                     BusinessException.class,
                     () -> stockCurrentPriceQueryService.getCurrentPrice(
-                            stockCode,
-                            CurrentPriceMarketType.KRX
+                            marketType,
+                            stockCode
                     )
             );
 
@@ -204,12 +220,12 @@ public class StockCurrentPriceQueryServiceTest {
             assertThat(exception.getErrorCode())
                     .isEqualTo(ErrorCode.KIS_CURRENT_PRICE_FETCH_FAILED);
 
-            verify(stockRepository).findByStockCode(stockCode);
+            verify(stockMetadataCacheService).getMetadata(stockCode);
             verify(kisAccessTokenProvider).getAccessToken();
             verify(kisCurrentPriceClient).fetchCurrentPrice(
                     accessToken,
                     stockCode,
-                    CurrentPriceMarketType.KRX
+                    marketType
             );
 
         }
@@ -218,21 +234,13 @@ public class StockCurrentPriceQueryServiceTest {
         @DisplayName("[예외] - KIS 현재가 응답 output이 없으면 현재가를 반환하지 않음")
         void currentPrice_whenKisResponseOutputIsNull_throwsException() {
             // Given
+            CurrentPriceMarketType marketType = CurrentPriceMarketType.KRX;
             String accessToken = "access_token";
             String stockCode = "005930";
 
-            Stock stock = Stock.createStock(
-                    "00000A005930",
-                    "KR7005930003",
+            StockMetadata metadata = new StockMetadata(
                     stockCode,
-                    "삼성전자보통주",
-                    "삼성전자",
-                    "DOMESTIC_STOCK",
-                    "300",
-                    "101010",
-                    "주권",
-                    "1010",
-                    "주식"
+                    "삼성전자"
             );
 
             KisCurrentPriceResponse kisResponse = new KisCurrentPriceResponse(
@@ -242,8 +250,8 @@ public class StockCurrentPriceQueryServiceTest {
                     null
             );
 
-            given(stockRepository.findByStockCode(stockCode))
-                    .willReturn(Optional.of(stock));
+            given(stockMetadataCacheService.getMetadata(stockCode))
+                    .willReturn(metadata);
 
             given(kisAccessTokenProvider.getAccessToken())
                     .willReturn(accessToken);
@@ -251,7 +259,7 @@ public class StockCurrentPriceQueryServiceTest {
             given(kisCurrentPriceClient.fetchCurrentPrice(
                     accessToken,
                     stockCode,
-                    CurrentPriceMarketType.KRX
+                    marketType
             )).willReturn(kisResponse);
 
 
@@ -259,8 +267,8 @@ public class StockCurrentPriceQueryServiceTest {
             BusinessException exception = assertThrows(
                     BusinessException.class,
                     () -> stockCurrentPriceQueryService.getCurrentPrice(
-                            stockCode,
-                            CurrentPriceMarketType.KRX
+                            marketType,
+                            stockCode
                     )
             );
 
@@ -269,12 +277,12 @@ public class StockCurrentPriceQueryServiceTest {
             assertThat(exception.getErrorCode())
                     .isEqualTo(ErrorCode.KIS_CURRENT_PRICE_INVALID_RESPONSE);
 
-            verify(stockRepository).findByStockCode(stockCode);
+            verify(stockMetadataCacheService).getMetadata(stockCode);
             verify(kisAccessTokenProvider).getAccessToken();
             verify(kisCurrentPriceClient).fetchCurrentPrice(
                     accessToken,
                     stockCode,
-                    CurrentPriceMarketType.KRX
+                    marketType
             );
         }
     }
