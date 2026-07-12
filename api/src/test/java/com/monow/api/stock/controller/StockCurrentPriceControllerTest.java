@@ -2,7 +2,8 @@ package com.monow.api.stock.controller;
 
 
 import com.monow.api.external.kis.type.CurrentPriceMarketType;
-import com.monow.api.stock.application.StockCurrentPriceService;
+import com.monow.api.stock.application.StockCurrentPriceQueryService;
+import com.monow.api.stock.application.StockRealtimePriceConnectionService;
 import com.monow.api.stock.dto.response.StockCurrentPriceResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -11,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+
+import java.time.LocalDateTime;
 
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
@@ -25,7 +28,10 @@ public class StockCurrentPriceControllerTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private StockCurrentPriceService stockCurrentPriceService;
+    private StockCurrentPriceQueryService stockCurrentPriceQueryService;
+
+    @MockitoBean
+    private StockRealtimePriceConnectionService stockRealtimePriceConnectionService;
 
     @Nested
     @DisplayName("주식 현재가 조회 API")
@@ -35,37 +41,138 @@ public class StockCurrentPriceControllerTest {
         @DisplayName("[성공] - stockCode로 KRX 현재가를 조회")
         void getCurrentPrice_whenStockCodeProvided_returnsCurrentPrice() throws Exception {
             // Given
+            CurrentPriceMarketType marketType = CurrentPriceMarketType.KRX;
             String stockCode = "005930";
+            String stockName = "삼성전자";
+            String marketName = "KOSPI200";
+            String industryName = "전기·전자";
 
-            StockCurrentPriceResponse response = new StockCurrentPriceResponse(
-                    "005930",
-                    "삼성전자",
-                    "KOSPI200",
-                    "전기·전자",
-                    "322500",
-                    "23500",
-                    "2",
-                    "7.86",
-                    "31006148",
-                    "10243164332536",
-                    "326000",
-                    "339000",
-                    "320000",
-                    "2026-06-06 00:00:00"
+            String currentPrice = "322500";
+            String changePrice = "23500";
+            String changeSign = "2";
+            String changeRate = "7.86";
+
+            String tradeVolume = "31006148";
+            String tradeAmount = "10243164332536";
+
+            String openPrice = "326000";
+            String highPrice = "339000";
+            String lowPrice = "320000";
+
+            String tradeTime = "09:00:15";
+
+            LocalDateTime updatedAt = LocalDateTime.of(
+                    2026,
+                    6,
+                    6,
+                    9,
+                    0,
+                    16
             );
 
-            given(stockCurrentPriceService.getCurrentPrice(stockCode, CurrentPriceMarketType.KRX))
+            StockCurrentPriceResponse response = new StockCurrentPriceResponse(
+                    marketType,
+                    stockCode,
+                    stockName,
+                    marketName,
+                    industryName,
+                    currentPrice,
+                    changePrice,
+                    changeSign,
+                    changeRate,
+                    tradeVolume,
+                    tradeAmount,
+                    openPrice,
+                    highPrice,
+                    lowPrice,
+                    updatedAt
+            );
+
+            given(stockCurrentPriceQueryService.getCurrentPrice(marketType, stockCode))
                     .willReturn(response);
 
             // When & Then
-            mockMvc.perform(get("/api/v1/stocks/{stockCode}/current-price", stockCode))
+            mockMvc.perform(get("/api/v1/stocks/{stockCode}/current-price/{marketType}",
+                            stockCode,
+                            marketType.name()))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.success").value(true))
                     .andExpect(jsonPath("$.data.stockCode").value("005930"))
                     .andExpect(jsonPath("$.data.stockName").value("삼성전자"))
                     .andExpect(jsonPath("$.data.currentPrice").value("322500"));
 
-            verify(stockCurrentPriceService).getCurrentPrice(stockCode, CurrentPriceMarketType.KRX);
+            verify(stockCurrentPriceQueryService).getCurrentPrice(marketType, stockCode);
         }
     }
+
+    @Test
+    @DisplayName("[성공] - 삼성전자 상세 조회 시 stockCode(삼성전자)의 실시간 주가를 받을 수 있도록 등록")
+    void getStockDetail_whenSamsungStockRequested_registersStockCodeForRealtimePriceUpdates() throws  Exception{
+        // Given
+        CurrentPriceMarketType marketType = CurrentPriceMarketType.KRX;
+        String stockCode = "005930";
+        String stockName = "삼성전자";
+        String marketName = "KOSPI200";
+        String industryName = "전기·전자";
+
+        String currentPrice = "322500";
+        String changePrice = "23500";
+        String changeSign = "2";
+        String changeRate = "7.86";
+
+        String tradeVolume = "31006148";
+        String tradeAmount = "10243164332536";
+
+        String openPrice = "326000";
+        String highPrice = "339000";
+        String lowPrice = "320000";
+
+        LocalDateTime updatedAt = LocalDateTime.of(
+                2026,
+                6,
+                6,
+                9,
+                0,
+                16
+        );
+
+        StockCurrentPriceResponse response = new StockCurrentPriceResponse(
+                marketType,
+                stockCode,
+                stockName,
+                marketName,
+                industryName,
+                currentPrice,
+                changePrice,
+                changeSign,
+                changeRate,
+                tradeVolume,
+                tradeAmount,
+                openPrice,
+                highPrice,
+                lowPrice,
+                updatedAt
+        );
+
+
+        given(stockCurrentPriceQueryService.getCurrentPrice(marketType, stockCode))
+                .willReturn(response);
+
+        // When & Then
+        mockMvc.perform(get("/api/v1/stocks/{stockCode}/detail", stockCode)
+                                .param("marketType", marketType.name())
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.stockCode").value("005930"))
+                .andExpect(jsonPath("$.data.stockName").value("삼성전자"))
+                .andExpect(jsonPath("$.data.webSocketEndpoint").value("/ws"))
+                .andExpect(jsonPath("$.data.realtimeTopic").value("/topic/stocks/KRX/005930"));
+
+        verify(stockCurrentPriceQueryService).getCurrentPrice(marketType, stockCode);
+        verify(stockRealtimePriceConnectionService).subscribe(marketType, stockCode);
+
+
+    }
+
 }
