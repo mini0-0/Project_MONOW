@@ -3,7 +3,7 @@ package com.monow.api.external.kis.application;
 import com.monow.api.external.kis.client.KisCurrentPriceClient;
 import com.monow.api.external.kis.dto.response.KisCurrentPriceResponse;
 import com.monow.api.external.kis.type.CurrentPriceMarketType;
-import com.monow.api.stock.application.StockCurrentPriceService;
+import com.monow.api.stock.application.StockCurrentPriceQueryService;
 import com.monow.api.stock.dto.response.StockCurrentPriceResponse;
 import com.monow.domain.stock.entity.Stock;
 import com.monow.domain.stock.repository.StockRepository;
@@ -29,7 +29,7 @@ import static org.mockito.Mockito.verify;
 
 @Slf4j
 @ExtendWith(MockitoExtension.class)
-public class StockCurrentPriceServiceTest {
+public class StockCurrentPriceQueryServiceTest {
 
     @Mock
     private KisAccessTokenProvider kisAccessTokenProvider;
@@ -41,7 +41,7 @@ public class StockCurrentPriceServiceTest {
     private KisCurrentPriceClient kisCurrentPriceClient;
 
     @InjectMocks
-    private StockCurrentPriceService stockCurrentPriceService;
+    private StockCurrentPriceQueryService stockCurrentPriceQueryService;
 
 
     @Nested
@@ -101,7 +101,7 @@ public class StockCurrentPriceServiceTest {
                     .willReturn(kisResponse);
 
             // When
-            StockCurrentPriceResponse response = stockCurrentPriceService.getCurrentPrice(stockCode, CurrentPriceMarketType.KRX);
+            StockCurrentPriceResponse response = stockCurrentPriceQueryService.getCurrentPrice(stockCode, CurrentPriceMarketType.KRX);
 
             // Then
             assertThat(response.stockCode()).isEqualTo("005930");
@@ -142,7 +142,7 @@ public class StockCurrentPriceServiceTest {
             // When & Then
             BusinessException exception = assertThrows(
                     BusinessException.class,
-                    () -> stockCurrentPriceService.getCurrentPrice(
+                    () -> stockCurrentPriceQueryService.getCurrentPrice(
                             stockCode,
                             CurrentPriceMarketType.KRX)
             );
@@ -193,7 +193,7 @@ public class StockCurrentPriceServiceTest {
             // When & Then
             BusinessException exception = assertThrows(
                     BusinessException.class,
-                    () -> stockCurrentPriceService.getCurrentPrice(
+                    () -> stockCurrentPriceQueryService.getCurrentPrice(
                             stockCode,
                             CurrentPriceMarketType.KRX
                     )
@@ -258,7 +258,7 @@ public class StockCurrentPriceServiceTest {
             // When & Then
             BusinessException exception = assertThrows(
                     BusinessException.class,
-                    () -> stockCurrentPriceService.getCurrentPrice(
+                    () -> stockCurrentPriceQueryService.getCurrentPrice(
                             stockCode,
                             CurrentPriceMarketType.KRX
                     )
