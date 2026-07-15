@@ -4,6 +4,7 @@ import com.monow.api.watchlist.application.WatchlistService;
 import com.monow.api.watchlist.dto.request.WatchlistRequest;
 import com.monow.api.watchlist.dto.response.WatchlistResponse;
 import com.monow.global.response.ApiResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.web.bind.annotation.*;
@@ -18,11 +19,11 @@ public class WatchlistController {
     @PutMapping("/{stockCode}/status")
     public ApiResponse<WatchlistResponse> setWatchlistStatus(
             @PathVariable(value = "stockCode") String stockCode,
-            @RequestBody WatchlistRequest request
+            @Valid @RequestBody WatchlistRequest request
     ) {
         // 임시 userId
         Long userId = 2L;
-        Boolean watchlisted = watchlistService.setWatchlistStatus(userId, stockCode, request.watchlisted());
+        boolean watchlisted = watchlistService.setWatchlistStatus(userId, stockCode, request.watchlisted());
 
         WatchlistResponse response = new WatchlistResponse(
                 stockCode,
