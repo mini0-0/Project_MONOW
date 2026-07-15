@@ -10,5 +10,7 @@ import java.util.Optional;
 
 @Repository
 public interface WatchlistRepository extends JpaRepository<Watchlist, Long> {
+    boolean existsByUserAndStock(User user, Stock stock);
+
     Optional<Watchlist> findByUserAndStock(User user, Stock stock);
 }

@@ -26,26 +26,45 @@ public class WatchlistService {
 
     @Transactional
     public boolean setWatchlistStatus(Long userId, String stockCode, boolean watchlisted) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-        Stock stock = stockRepository.findByStockCode(stockCode)
-                .orElseThrow(() -> new BusinessException(ErrorCode.STOCK_NOT_FOUND));
+        User user = getUser(userId);
+        Stock stock = getStock(stockCode);
 
-        Optional<Watchlist> existWatchlist = watchlistRepository.findByUserAndStock(user, stock);
-
-        if(watchlisted) {
-            if (existWatchlist.isEmpty()) {
-                Watchlist watchlist = Watchlist.createWatchlist(user, stock);
-                watchlistRepository.save(watchlist);
-            }
+        if (watchlisted) {
+            addWatchlist(user, stock);
             return true;
         }
 
-        if (existWatchlist.isPresent()) {
-            Watchlist watchlist = existWatchlist.get();
-            watchlistRepository.delete(watchlist);
-        }
-
+        removeWatchlist(user, stock);
         return false;
+    }
+
+    private void addWatchlist(User user, Stock stock) {
+        boolean watchlisted = watchlistRepository.existsByUserAndStock(user, stock);
+
+        if (watchlisted) {
+            return;
+        }
+        Watchlist watchlist = Watchlist.createWatchlist(user, stock);
+
+        watchlistRepository.save(watchlist);
+
+    }
+
+    private void removeWatchlist(User user, Stock stock) {
+        watchlistRepository.findByUserAndStock(user, stock)
+                .ifPresent(watchlistRepository::delete);
+
+    }
+
+
+    private User getUser(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+    }
+
+
+    private Stock getStock(String stockCode) {
+        return stockRepository.findByStockCode(stockCode)
+                .orElseThrow(() -> new BusinessException(ErrorCode.STOCK_NOT_FOUND));
     }
 }
