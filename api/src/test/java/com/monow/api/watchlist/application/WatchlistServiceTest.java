@@ -27,7 +27,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class WatchlistServiceTest {
+class WatchlistServiceTest {
 
     @Mock
     private UserRepository userRepository;
@@ -39,41 +39,149 @@ public class WatchlistServiceTest {
     private WatchlistRepository watchlistRepository;
 
     @InjectMocks
-    private WatchlistService  watchlistService;
-
+    private WatchlistService watchlistService;
 
     @Nested
-    @DisplayName("관심 종목 상태 변경")
+    @DisplayName("관심종목 등록")
     class AddWatchlist {
 
         @Test
-        @DisplayName("[성공] - 사용자가 관심목록을 추가하면 관심목록이 저장")
-        void addWatchlist_whenUserAndStockExist_savesWatchlist() {
+        @DisplayName("[성공] - 미등록 종목을 관심종목으로 설정하면 관심종목 저장")
+        void setWatchlistStatus_whenWatchlistedTrueAndNotExists_savesWatchlist() {
             // Given
             Long userId = 1L;
             String stockCode = "005930";
+            User user = createUser();
+            Stock stock = createStock(stockCode);
 
-            User user = User.createUser(
-                    "test@test.com",
-                    "1234",
-                    "홍길동",
-                    "워렌버핏"
-                );
+            given(userRepository.findById(userId))
+                    .willReturn(Optional.of(user));
 
-            Stock stock = Stock.createStock(
-                    "00000A005930",
-                    "KR7005930003",
+            given(stockRepository.findByStockCode(stockCode))
+                    .willReturn(Optional.of(stock));
+
+            given(watchlistRepository.existsByUserAndStock(user, stock))
+                    .willReturn(false);
+
+            // When
+            boolean result = watchlistService.setWatchlistStatus(
+                    userId,
                     stockCode,
-                    "삼성전자보통주",
-                    "삼성전자",
-                    "DOMESTIC_STOCK",
-                    "300",
-                    "101010",
-                    "주권",
-                    "1010",
-                    "주식"
-                );
+                    true
+            );
 
+            // Then
+            assertThat(result).isTrue();
+
+            verify(watchlistRepository)
+                    .existsByUserAndStock(user, stock);
+
+            verify(watchlistRepository, times(1))
+                    .save(any(Watchlist.class));
+
+            verify(watchlistRepository, never())
+                    .findByUserAndStock(any(User.class), any(Stock.class));
+
+            verify(watchlistRepository, never())
+                    .delete(any(Watchlist.class));
+        }
+
+        @Test
+        @DisplayName("[성공] - 이미 등록된 종목을 관심종목으로 설정하면 중복 저장 생략")
+        void setWatchlistStatus_whenWatchlistedTrueAndAlreadyExists_doesNotSaveAgain() {
+            // Given
+            Long userId = 1L;
+            String stockCode = "005930";
+            User user = createUser();
+            Stock stock = createStock(stockCode);
+
+            given(userRepository.findById(userId))
+                    .willReturn(Optional.of(user));
+
+            given(stockRepository.findByStockCode(stockCode))
+                    .willReturn(Optional.of(stock));
+
+            given(watchlistRepository.existsByUserAndStock(user, stock))
+                    .willReturn(true);
+
+            // When
+            boolean result = watchlistService.setWatchlistStatus(
+                    userId,
+                    stockCode,
+                    true
+            );
+
+            // Then
+            assertThat(result).isTrue();
+
+            verify(watchlistRepository)
+                    .existsByUserAndStock(user, stock);
+
+            verify(watchlistRepository, never())
+                    .save(any(Watchlist.class));
+
+            verify(watchlistRepository, never())
+                    .findByUserAndStock(any(User.class), any(Stock.class));
+
+            verify(watchlistRepository, never())
+                    .delete(any(Watchlist.class));
+        }
+    }
+
+    @Nested
+    @DisplayName("관심종목 해제")
+    class RemoveWatchlist {
+
+        @Test
+        @DisplayName("[성공] - 등록된 종목을 관심종목 해제로 설정하면 관심종목 삭제")
+        void setWatchlistStatus_whenWatchlistedFalseAndExists_deletesWatchlist() {
+            // Given
+            Long userId = 1L;
+            String stockCode = "005930";
+            User user = createUser();
+            Stock stock = createStock(stockCode);
+            Watchlist watchlist = Watchlist.createWatchlist(user, stock);
+
+            given(userRepository.findById(userId))
+                    .willReturn(Optional.of(user));
+
+            given(stockRepository.findByStockCode(stockCode))
+                    .willReturn(Optional.of(stock));
+
+            given(watchlistRepository.findByUserAndStock(user, stock))
+                    .willReturn(Optional.of(watchlist));
+
+            // When
+            boolean result = watchlistService.setWatchlistStatus(
+                    userId,
+                    stockCode,
+                    false
+            );
+
+            // Then
+            assertThat(result).isFalse();
+
+            verify(watchlistRepository)
+                    .findByUserAndStock(user, stock);
+
+            verify(watchlistRepository)
+                    .delete(watchlist);
+
+            verify(watchlistRepository, never())
+                    .existsByUserAndStock(any(User.class), any(Stock.class));
+
+            verify(watchlistRepository, never())
+                    .save(any(Watchlist.class));
+        }
+
+        @Test
+        @DisplayName("[성공] - 이미 해제된 종목을 관심종목 해제로 설정하면 삭제 생략")
+        void setWatchlistStatus_whenWatchlistedFalseAndNotExists_doesNotDelete() {
+            // Given
+            Long userId = 1L;
+            String stockCode = "005930";
+            User user = createUser();
+            Stock stock = createStock(stockCode);
 
             given(userRepository.findById(userId))
                     .willReturn(Optional.of(user));
@@ -85,67 +193,32 @@ public class WatchlistServiceTest {
                     .willReturn(Optional.empty());
 
             // When
-            boolean result = watchlistService.setWatchlistStatus(userId, stockCode, true);
-
-
-            // Then
-            assertThat(result).isTrue();
-            verify(watchlistRepository, times(1))
-                    .save(any(Watchlist.class));
-
-        }
-
-        @Test
-        @DisplayName("[성공] - 이미 등록된 관심종목이면 관심종목 취소")
-        void addWatchlist_whenWatchlistAlreadyExists_throwsException() {
-            // Given
-            Long userId = 1L;
-            String stockCode = "005930";
-
-            User user = User.createUser(
-                    "test@test.com",
-                    "1234",
-                    "홍길동",
-                    "워렌버핏"
-            );
-
-            Stock stock = Stock.createStock(
-                    "00000A005930",
-                    "KR7005930003",
+            boolean result = watchlistService.setWatchlistStatus(
+                    userId,
                     stockCode,
-                    "삼성전자보통주",
-                    "삼성전자",
-                    "DOMESTIC_STOCK",
-                    "300",
-                    "101010",
-                    "주권",
-                    "1010",
-                    "주식"
+                    false
             );
-
-            Watchlist existWatchlist = Watchlist.createWatchlist(user, stock);
-
-            given(userRepository.findById(userId))
-                    .willReturn(Optional.of(user));
-
-            given(stockRepository.findByStockCode(stockCode))
-                    .willReturn(Optional.of(stock));
-
-            given(watchlistRepository.findByUserAndStock(user, stock))
-                    .willReturn(Optional.of(existWatchlist));
-
-            // When
-            boolean result = watchlistService.setWatchlistStatus(userId, stockCode, false);
 
             // Then
             assertThat(result).isFalse();
-            verify(watchlistRepository, times(1))
-                    .delete(existWatchlist);
+
+            verify(watchlistRepository)
+                    .findByUserAndStock(user, stock);
+
+            verify(watchlistRepository, never())
+                    .delete(any(Watchlist.class));
+
+            verify(watchlistRepository, never())
+                    .existsByUserAndStock(any(User.class), any(Stock.class));
+
             verify(watchlistRepository, never())
                     .save(any(Watchlist.class));
-
         }
+    }
 
+    @Nested
+    @DisplayName("관심종목 상태 변경 실패")
+    class SetWatchlistStatusFail {
 
         @Test
         @DisplayName("[실패] - 사용자가 존재하지 않으면 USER_NOT_FOUND 예외 발생")
@@ -160,16 +233,22 @@ public class WatchlistServiceTest {
             // When
             BusinessException exception = assertThrows(
                     BusinessException.class,
-                    () -> watchlistService.setWatchlistStatus(userId, stockCode, true)
+                    () -> watchlistService.setWatchlistStatus(
+                            userId,
+                            stockCode,
+                            true
+                    )
             );
 
             // Then
             assertThat(exception.getErrorCode())
                     .isEqualTo(ErrorCode.USER_NOT_FOUND);
 
-
             verify(stockRepository, never())
                     .findByStockCode(anyString());
+
+            verify(watchlistRepository, never())
+                    .existsByUserAndStock(any(User.class), any(Stock.class));
 
             verify(watchlistRepository, never())
                     .findByUserAndStock(any(User.class), any(Stock.class));
@@ -187,13 +266,7 @@ public class WatchlistServiceTest {
             // Given
             Long userId = 1L;
             String stockCode = "005930";
-
-            User user = User.createUser(
-                    "test@test.com",
-                    "1234",
-                    "홍길동",
-                    "워렌버핏"
-            );
+            User user = createUser();
 
             given(userRepository.findById(userId))
                     .willReturn(Optional.of(user));
@@ -204,12 +277,19 @@ public class WatchlistServiceTest {
             // When
             BusinessException exception = assertThrows(
                     BusinessException.class,
-                    () -> watchlistService.setWatchlistStatus(userId, stockCode, true)
+                    () -> watchlistService.setWatchlistStatus(
+                            userId,
+                            stockCode,
+                            true
+                    )
             );
 
             // Then
             assertThat(exception.getErrorCode())
                     .isEqualTo(ErrorCode.STOCK_NOT_FOUND);
+
+            verify(watchlistRepository, never())
+                    .existsByUserAndStock(any(User.class), any(Stock.class));
 
             verify(watchlistRepository, never())
                     .findByUserAndStock(any(User.class), any(Stock.class));
@@ -222,5 +302,28 @@ public class WatchlistServiceTest {
         }
     }
 
+    private User createUser() {
+        return User.createUser(
+                "test@test.com",
+                "1234",
+                "홍길동",
+                "워렌버핏"
+        );
+    }
 
+    private Stock createStock(String stockCode) {
+        return Stock.createStock(
+                "00000A005930",
+                "KR7005930003",
+                stockCode,
+                "삼성전자보통주",
+                "삼성전자",
+                "DOMESTIC_STOCK",
+                "300",
+                "101010",
+                "주권",
+                "1010",
+                "주식"
+        );
+    }
 }
