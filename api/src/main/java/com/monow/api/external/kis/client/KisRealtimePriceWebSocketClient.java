@@ -1,7 +1,10 @@
 package com.monow.api.external.kis.client;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.monow.api.external.kis.config.KisProperties;
 import com.monow.api.external.kis.dto.request.KisRealtimePriceRequest;
+import com.monow.api.external.kis.event.KisRealtimeSubscriptionEvent;
 import com.monow.api.external.kis.type.CurrentPriceMarketType;
 import com.monow.api.stock.application.StockRealtimePriceHandler;
 import com.monow.api.external.kis.event.KisWebSocketConnectionEvent;
@@ -12,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
+import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.client.WebSocketClient;
@@ -32,6 +36,8 @@ public class KisRealtimePriceWebSocketClient {
 
     private static final String REALTIME_PRICE_TR_ID = "H0STCNT0";
 
+    private static final String PINGPONG_TR_ID = "PINGPONG";
+
     private static final String SUBSCRIBE_TR_TYPE = "1";
 
     private static final String CUSTOMER_TYPE_PERSONAL = "P";
@@ -39,6 +45,8 @@ public class KisRealtimePriceWebSocketClient {
     private static final String CONTENT_TYPE_UTF8 = "utf-8";
 
     private static final String REALTIME_DATA_TYPE = "0";
+
+    private static final String SUCCESS_CODE = "0";
 
     private static final int MINIMUM_FIELD_COUNT = 15;
 
@@ -57,6 +65,8 @@ public class KisRealtimePriceWebSocketClient {
 
     private final ApplicationEventPublisher applicationEventPublisher;
 
+    private final ObjectMapper objectMapper;
+
     private final Clock clock;
     private WebSocketSession session;
 
@@ -69,7 +79,7 @@ public class KisRealtimePriceWebSocketClient {
      *      * 실제 연결 완료는 afterConnectionEstablished()에서 확인
      */
     public void connect() {
-        this.approvalKey = kisWebSocketApprovalKeyClient.fetchApprovalKey();
+        approvalKey = kisWebSocketApprovalKeyClient.fetchApprovalKey();
 
         String websocketUrl = kisProperties.getWebsocketUrl();
 
@@ -88,7 +98,7 @@ public class KisRealtimePriceWebSocketClient {
             public void afterConnectionEstablished(WebSocketSession webSocketSession) {
                 KisRealtimePriceWebSocketClient.this.session = webSocketSession;
 
-                log.info("KIS WebSocket 연결 성공. sessionId={}", webSocketSession.getId());
+                log.info("KIS WebSocket 연결 성공 - sessionId={}", webSocketSession.getId());
 
                 applicationEventPublisher.publishEvent(
                         new KisWebSocketConnectionEvent(
@@ -108,7 +118,11 @@ public class KisRealtimePriceWebSocketClient {
 
                 log.info("KIS WebSocket 수신 데이터={}", rawData);
 
-                handleKisRealtimePriceData(rawData);
+                try {
+                    handleReceivedMessage(webSocketSession, rawData);
+                } catch (Exception exception) {
+                    log.error("KIS WebSocket 수신 데이터 처리 실패 - rawData={}", rawData, exception);
+                }
             }
 
             /**
@@ -116,20 +130,25 @@ public class KisRealtimePriceWebSocketClient {
              */
             @Override
             public void handleTransportError(WebSocketSession webSocketSession, Throwable exception) {
-                log.error("KIS WebSocket 통신 오류 발생", exception);
+                log.error(
+                        "KIS WebSocket 통신 오류 발생 - sessionId={}",
+                        webSocketSession.getId(),
+                        exception
+                );
             }
 
             /**
              * 실제 KIS WebSocket 연결 종료 시 실행
              */
             @Override
-            public void afterConnectionClosed(WebSocketSession webSocketSession, org.springframework.web.socket.CloseStatus status) {
-                log.warn("KIS WebSocket 연결 종료. sessionId={}, status={}",
+            public void afterConnectionClosed(WebSocketSession webSocketSession, CloseStatus status) {
+                log.warn("KIS WebSocket 연결 종료 - sessionId={}, statusCode={}, reason={}",
                         webSocketSession.getId(),
-                        status
+                        status.getCode(),
+                        status.getReason()
                 );
 
-                KisRealtimePriceWebSocketClient.this.session = null;
+                session = null;
 
                 applicationEventPublisher.publishEvent(
                         new KisWebSocketConnectionEvent(
@@ -147,7 +166,7 @@ public class KisRealtimePriceWebSocketClient {
          */
         webSocketClient.execute(handler, websocketUrl);
 
-        log.info("KIS WebSocket 연결 요청 완료. websocketUrl={}", websocketUrl);
+        log.info("KIS WebSocket 연결 요청 완료 - websocketUrl={}", websocketUrl);
     }
 
     /**
@@ -169,19 +188,106 @@ public class KisRealtimePriceWebSocketClient {
         try {
             session.sendMessage(new TextMessage(payload));
 
-            log.info("KIS 실시간 현재가 구독 요청 전송. marketType={}, stockCode={}",
+            log.info("KIS 실시간 현재가 구독 요청 전송 - marketType={}, stockCode={}",
                     marketType,
                     stockCode
             );
         } catch (IOException exception) {
             log.error(
-                    "KIS 실시간 현재가 구독 요청 실패. marketType={}, stockCode={}",
+                    "KIS 실시간 현재가 구독 요청 실패 - marketType={}, stockCode={}",
                     marketType,
                     stockCode,
                     exception
             );
             throw new BusinessException(ErrorCode.KIS_WEBSOCKET_SUBSCRIBE_FAILED);
         }
+    }
+
+    /**
+     * KIS WebSocket에서 받은 메시지 종류 구분
+     * 실시간 체결 데이터
+     */
+    void handleReceivedMessage(WebSocketSession webSocketSession, String rawData) throws Exception {
+        if (rawData == null || rawData.isBlank()) {
+            throw invalidRealtimeDataException();
+        }
+
+        if (rawData.startsWith("{")) {
+            handleJsonMessage(webSocketSession, rawData);
+            return;
+        }
+
+        handleKisRealtimePriceData(rawData);
+
+    }
+
+
+    /**
+     * KIS WebSocket에서 받은 JSON 메시지 처리
+     *
+     * JSON 메시지 종류:
+     * 1. PINGPONG 연결 유지 메시지
+     * 2. 종목 실시간 가격 수신 등록 결과
+     */
+    private void handleJsonMessage(WebSocketSession webSocketSession, String rawData) throws IOException {
+        JsonNode rootNode = objectMapper.readTree(rawData);
+        String trId = rootNode.path("header").path("tr_id").asText();
+
+        if (PINGPONG_TR_ID.equals(trId)) {
+            webSocketSession.sendMessage(new TextMessage(rawData));
+
+            log.debug(
+                    "KIS WebSocket PINGPONG 응답 전송 - sessionId={}",
+                    webSocketSession.getId()
+            );
+
+            return;
+        }
+
+        if(!REALTIME_PRICE_TR_ID.equals(trId)) {
+            log.debug("처리 대상이 아닌 KIS WebSocket JSON 메시지 - trId={}", trId);
+            return;
+        }
+
+        handleSubscriptionResponse(rootNode);
+
+    }
+
+    /**
+     * KIS 실시간 가격 수신 등록 성공·실패 응답 처리
+     */
+    private void handleSubscriptionResponse(JsonNode rootNode) {
+        String stockCode = rootNode.path("header").path("tr_key").asText();
+        String resultCode = rootNode.path("body").path("rt_cd").asText();
+        String messageCode = rootNode.path("body").path("msg_cd").asText();
+        String message = rootNode.path("body").path("msg1").asText();
+        boolean success = SUCCESS_CODE.equals(resultCode);
+
+        if (success) {
+            log.info(
+                    "KIS 실시간 현재가 등록 성공 - stockCode={}, messageCode={}, message={}",
+                    stockCode,
+                    messageCode,
+                    message
+            );
+        } else {
+            log.error(
+                    "KIS 실시간 현재가 등록 실패 - stockCode={}, resultCode={}, messageCode={}, message={}",
+                    stockCode,
+                    resultCode,
+                    messageCode,
+                    message
+            );
+        }
+
+        applicationEventPublisher.publishEvent(
+                new KisRealtimeSubscriptionEvent(
+                        CurrentPriceMarketType.KRX,
+                        stockCode,
+                        success,
+                        message
+                )
+        );
     }
 
     /**
@@ -229,14 +335,6 @@ public class KisRealtimePriceWebSocketClient {
             throw invalidRealtimeDataException();
         }
 
-        if (rawData.startsWith("{")) {
-            log.debug(
-                    "KIS WebSocket 구독 응답={}",
-                    rawData
-            );
-
-            return;
-        }
         String[] messageParts =
                 rawData.split("\\|", 4);
 
@@ -244,22 +342,19 @@ public class KisRealtimePriceWebSocketClient {
             throw invalidRealtimeDataException();
         }
 
-        String encryptionFlag =
-                messageParts[0];
+        String encryptionFlag = messageParts[0];
 
-        String trId =
-                messageParts[1];
+        String trId = messageParts[1];
 
-        String dataCountValue =
-                messageParts[2];
+        String dataCountValue = messageParts[2];
 
-        String body =
-                messageParts[3];
+        String body = messageParts[3];
 
         /*
          * 현재는 암호화되지 않은 데이터만 처리
          */
         if (!REALTIME_DATA_TYPE.equals(encryptionFlag)) {
+            log.debug("암호화된 KIS WebSocket 데이터 처리 생략 - encryptionFlag={}", encryptionFlag);
             return;
         }
 
@@ -267,14 +362,14 @@ public class KisRealtimePriceWebSocketClient {
          * 국내주식 실시간 체결 데이터만 처리
          */
         if (!REALTIME_PRICE_TR_ID.equals(trId)) {
+            log.debug("처리 대상이 아닌 KIS WebSocket 데이터 - trId={}", trId);
             return;
         }
 
         int dataCount;
 
         try {
-            dataCount =
-                    Integer.parseInt(dataCountValue);
+            dataCount = Integer.parseInt(dataCountValue);
         } catch (NumberFormatException exception) {
             throw invalidRealtimeDataException();
         }
@@ -283,36 +378,36 @@ public class KisRealtimePriceWebSocketClient {
          * 현재 구현은 한 메시지에 체결 데이터 1건 처리
          */
         if (dataCount != 1) {
-            log.warn(
-                    "현재는 실시간 체결 데이터 1건만 처리합니다. dataCount={}",
-                    dataCount
-            );
+            log.warn("현재는 실시간 체결 데이터 1건만 처리합니다. dataCount={}", dataCount);
 
             return;
         }
 
-        String[] fields =
-                body.split("\\^", -1);
+        String[] fields = body.split("\\^", -1);
 
         if (fields.length < MINIMUM_FIELD_COUNT) {
             throw invalidRealtimeDataException();
         }
 
-        RealtimeStockPriceResponse response =
-                convertToRealtimeResponse(fields);
+        RealtimeStockPriceResponse response = convertToRealtimeResponse(fields);
 
         /*
-         * Redis 저장 없이 프론트 WebSocket으로 바로 전송
+         * 실시간 현재가를 Redis에 저장하고 프론트 WebSocket topic으로 전달
          */
         stockRealtimePriceHandler.handleRealtimePrice(
                 response.marketType(),
                 response.stockCode(),
                 response
         );
+
+        log.info(
+                "KIS 실시간 현재가 처리 완료 - stockCode={}, currentPrice={}, tradeTime={}",
+                response.stockCode(),
+                response.currentPrice(),
+                response.tradeTime()
+        );
     }
-    private RealtimeStockPriceResponse convertToRealtimeResponse(
-            String[] fields
-    ) {
+    private RealtimeStockPriceResponse convertToRealtimeResponse(String[] fields) {
         return new RealtimeStockPriceResponse(
                 CurrentPriceMarketType.KRX,
                 fields[0],
@@ -339,13 +434,8 @@ public class KisRealtimePriceWebSocketClient {
         }
 
         try {
-            return LocalTime.parse(
-                            rawTradeTime,
-                            KIS_TRADE_TIME_FORMATTER
-                    )
-                    .format(
-                            RESPONSE_TRADE_TIME_FORMATTER
-                    );
+            return LocalTime.parse(rawTradeTime, KIS_TRADE_TIME_FORMATTER)
+                    .format(RESPONSE_TRADE_TIME_FORMATTER);
         } catch (Exception exception) {
             throw invalidRealtimeDataException();
         }

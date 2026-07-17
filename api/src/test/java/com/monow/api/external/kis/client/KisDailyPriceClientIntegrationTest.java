@@ -1,7 +1,7 @@
 package com.monow.api.external.kis.client;
 
+import com.monow.api.external.kis.application.KisAccessTokenProvider;
 import com.monow.api.external.kis.dto.response.KisDailyPriceResponse;
-import com.monow.api.external.kis.dto.response.KisTokenResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -16,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class KisDailyPriceClientIntegrationTest {
 
     @Autowired
-    private KisTokenClient kisTokenClient;
+    private KisAccessTokenProvider kisAccessTokenProvider;
 
     @Autowired
     private KisDailyPriceClient kisDailyPriceClient;
@@ -29,8 +29,7 @@ public class KisDailyPriceClientIntegrationTest {
         @DisplayName("[성공] - 삼성전자 일별 시세 조회")
         void fetchDailyPrice_whenValidStockCodeProvided_returnsDailyPrices() {
             // Given
-            KisTokenResponse tokenResponse = kisTokenClient.issueToken();
-            String accessToken = tokenResponse.accessToken();
+            String accessToken = kisAccessTokenProvider.getAccessToken();
 
             String stockCode = "005930";
             assertThat(accessToken).isNotBlank();

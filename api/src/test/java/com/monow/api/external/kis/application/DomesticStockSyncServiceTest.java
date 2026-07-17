@@ -114,7 +114,7 @@ public class DomesticStockSyncServiceTest {
             verify(stockInfoSyncService).syncStockInfo("000660");
             verify(stockInfoSyncService).syncStockInfo("035720");
 
-            verify(stockInfoSyncService, times(3)).syncStockInfo(any());
+            verify(stockInfoSyncService, times(2)).syncStockInfo(any());
 
 
         }

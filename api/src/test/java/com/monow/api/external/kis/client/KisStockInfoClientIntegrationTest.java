@@ -1,7 +1,7 @@
 package com.monow.api.external.kis.client;
 
+import com.monow.api.external.kis.application.KisAccessTokenProvider;
 import com.monow.api.external.kis.dto.response.KisStockInfoResponse;
-import com.monow.api.external.kis.dto.response.KisTokenResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -16,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class KisStockInfoClientIntegrationTest {
 
     @Autowired
-    private KisTokenClient kisTokenClient;
+    private KisAccessTokenProvider kisAccessTokenProvider;
 
     @Autowired
     private KisStockInfoClient kisStockInfoClient;
@@ -30,8 +30,7 @@ public class KisStockInfoClientIntegrationTest {
         void fetchStockInfo_whenValidStockCodeProvided_returnsStockInfo() {
 
             // Given
-            KisTokenResponse tokenResponse = kisTokenClient.issueToken();
-            String accessToken = tokenResponse.accessToken();
+            String accessToken = kisAccessTokenProvider.getAccessToken();
 
             String stockCode = "005930";
 
