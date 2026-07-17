@@ -1,11 +1,12 @@
 package com.monow.api.external.kis.client;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.monow.api.external.kis.config.KisProperties;
 import com.monow.api.external.kis.dto.request.KisRealtimePriceRequest;
+import com.monow.api.external.kis.event.KisRealtimeSubscriptionEvent;
 import com.monow.api.external.kis.type.CurrentPriceMarketType;
 import com.monow.api.stock.application.StockRealtimePriceHandler;
 import com.monow.api.stock.dto.response.RealtimeStockPriceResponse;
-import com.monow.api.stock.dto.response.StockCurrentPriceResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.web.socket.WebSocketSession;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -25,8 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class KisRealtimePriceWebSocketClientTest {
@@ -43,6 +44,9 @@ class KisRealtimePriceWebSocketClientTest {
     @Mock
     private ApplicationEventPublisher applicationEventPublisher;
 
+    @Mock
+    private ObjectMapper objectMapper;
+
     private KisRealtimePriceWebSocketClient kisRealtimePriceWebSocketClient;
 
     @BeforeEach
@@ -51,12 +55,14 @@ class KisRealtimePriceWebSocketClientTest {
                 Instant.parse("2026-06-06T00:00:16Z"),
                 ZoneId.of("Asia/Seoul")
         );
+        objectMapper = new ObjectMapper();
 
         kisRealtimePriceWebSocketClient = new KisRealtimePriceWebSocketClient(
                 kisProperties,
                 kisWebSocketApprovalKeyClient,
                 stockRealtimePriceHandler,
                 applicationEventPublisher,
+                objectMapper,
                 fixedClock
         );
     }
@@ -148,8 +154,9 @@ class KisRealtimePriceWebSocketClientTest {
 
     @Test
     @DisplayName("[성공] - KIS 구독 결과 JSON은 실시간 현재가로 처리하지 않음")
-    void handleKisRealtimePriceData_whenSubscribeResponse_doesNotCallHandler() {
+    void handleKisRealtimePriceData_whenSubscribeResponse_doesNotCallHandler() throws Exception{
         // Given
+        WebSocketSession webSocketSession = mock(WebSocketSession.class);
         String rawData = """
                 {
                   "header": {
@@ -164,13 +171,16 @@ class KisRealtimePriceWebSocketClientTest {
                 """;
 
         // When
-        kisRealtimePriceWebSocketClient.handleKisRealtimePriceData(rawData);
+        kisRealtimePriceWebSocketClient.handleReceivedMessage(webSocketSession,rawData);
 
         // Then
         verify(stockRealtimePriceHandler, never()).handleRealtimePrice(
                 any(),
                 any(),
                 any()
+        );
+        verify(applicationEventPublisher).publishEvent(
+                any(KisRealtimeSubscriptionEvent.class)
         );
     }
 }
