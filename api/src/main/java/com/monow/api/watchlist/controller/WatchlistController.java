@@ -16,7 +16,7 @@ public class WatchlistController {
 
     private final WatchlistService watchlistService;
 
-    @PutMapping("/{stockCode}/status")
+    @PutMapping("/{stockCode}")
     public ApiResponse<WatchlistResponse> setWatchlistStatus(
             @PathVariable(value = "stockCode") String stockCode,
             @Valid @RequestBody WatchlistRequest request
