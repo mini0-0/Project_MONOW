@@ -1,5 +1,7 @@
 package com.monow.global.config;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -12,21 +14,31 @@ public class RedisConfig {
 
     @Bean
     public RedisTemplate<String, Object> redisTemplate(
-            RedisConnectionFactory redisConnectionFactory
+            RedisConnectionFactory redisConnectionFactory,
+            ObjectMapper objectMapper
     ) {
-       RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
+        RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
 
-       redisTemplate.setConnectionFactory(redisConnectionFactory);
+        redisTemplate.setConnectionFactory(redisConnectionFactory);
 
-        GenericJackson2JsonRedisSerializer jsonRedisSerializer = new GenericJackson2JsonRedisSerializer();
-        redisTemplate.setKeySerializer(new StringRedisSerializer());
-        redisTemplate.setValueSerializer(jsonRedisSerializer);
-        redisTemplate.setHashKeySerializer(new StringRedisSerializer());
-        redisTemplate.setHashValueSerializer(jsonRedisSerializer);
+        ObjectMapper redisObjectMapper = objectMapper.copy();
 
-        redisTemplate.afterPropertiesSet();
+        redisObjectMapper.activateDefaultTyping(
+                redisObjectMapper.getPolymorphicTypeValidator(),
+                ObjectMapper.DefaultTyping.NON_FINAL,
+                JsonTypeInfo.As.PROPERTY
+        );
 
-        return redisTemplate;
+       StringRedisSerializer stringRedisSerializer = new StringRedisSerializer();
+       GenericJackson2JsonRedisSerializer jsonRedisSerializer = new GenericJackson2JsonRedisSerializer(redisObjectMapper);
+
+       redisTemplate.setKeySerializer(stringRedisSerializer);
+       redisTemplate.setValueSerializer(jsonRedisSerializer);
+       redisTemplate.setHashKeySerializer(stringRedisSerializer);
+       redisTemplate.setHashValueSerializer(jsonRedisSerializer);
+       redisTemplate.afterPropertiesSet();
+
+       return redisTemplate;
     }
 
 }
