@@ -19,11 +19,12 @@ public class WebsocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
+        // Postman, native WebSocket 클라이언트 확인용
         registry.addEndpoint("/ws")
-                /*
-                 * 개발 단계에서 모든 Origin의 WebSocket 연결을 허용하기 위한 설정
-                 * 운영 환경에서는 실제 클라이언트 도메인만 허용하도록 변경 필요
-                 */
+                .setAllowedOriginPatterns("*");
+
+        // 브라우저 SockJS 클라이언트용
+        registry.addEndpoint("/ws-sockjs")
                 .setAllowedOriginPatterns("*")
                 .withSockJS();
     }
