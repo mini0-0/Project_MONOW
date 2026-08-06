@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDateTime;
 
@@ -65,26 +66,43 @@ public class StockCurrentPriceQueryService {
             throw  new BusinessException(ErrorCode.KIS_CURRENT_PRICE_INVALID_RESPONSE);
         }
 
-        LocalDateTime updatedAt =
-                LocalDateTime.now(clock);
+        LocalDateTime updatedAt = LocalDateTime.now(clock);
 
+        try {
+            return new StockCurrentPriceResponse(
+                    marketType,
+                    metadata.stockCode(),
+                    metadata.stockName(),
 
-        return new StockCurrentPriceResponse(
-                marketType,
-                metadata.stockCode(),
-                metadata.stockName(),
-                output.marketName(),
-                output.industryName(),
-                output.currentPrice(),
-                output.changePrice(),
-                output.changeSign(),
-                output.changeRate(),
-                output.tradeVolume(),
-                output.tradeAmount(),
-                output.openPrice(),
-                output.highPrice(),
-                output.lowPrice(),
-                updatedAt
-        );
+                    output.marketName(),
+                    output.industryName(),
+
+                    new BigDecimal(output.currentPrice()),
+                    new BigDecimal(output.changePrice()),
+
+                    output.changeSign(),
+
+                    new BigDecimal(output.changeRate()),
+
+                    Long.parseLong(output.tradeVolume()),
+
+                    new BigDecimal(output.tradeAmount()),
+                    new BigDecimal(output.openPrice()),
+                    new BigDecimal(output.highPrice()),
+                    new BigDecimal(output.lowPrice()),
+
+                    updatedAt
+            );
+        } catch (NumberFormatException exception) {
+            log.warn(
+                    "KIS 현재가 숫자 변환 실패 - stockCode={}, marketType={}",
+                    stockCode,
+                    marketType,
+                    exception
+            );
+            throw new BusinessException(
+                    ErrorCode.KIS_CURRENT_PRICE_INVALID_RESPONSE
+            );
+        }
     }
 }

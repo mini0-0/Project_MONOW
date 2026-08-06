@@ -13,7 +13,9 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
@@ -47,19 +49,19 @@ public class StockCurrentPriceControllerTest {
             String marketName = "KOSPI200";
             String industryName = "전기·전자";
 
-            String currentPrice = "322500";
-            String changePrice = "23500";
+            BigDecimal currentPrice = BigDecimal.valueOf(322500);
+            BigDecimal changePrice = BigDecimal.valueOf(23500);
             String changeSign = "2";
-            String changeRate = "7.86";
+            BigDecimal changeRate = BigDecimal.valueOf(7.86);
 
-            String tradeVolume = "31006148";
-            String tradeAmount = "10243164332536";
+            Long tradeVolume = 31_006_148L;
+            BigDecimal tradeAmount = BigDecimal.valueOf(10_243_164_332_536L);
 
-            String openPrice = "326000";
-            String highPrice = "339000";
-            String lowPrice = "320000";
+            BigDecimal openPrice = BigDecimal.valueOf(326000);
+            BigDecimal highPrice = BigDecimal.valueOf(339000);
+            BigDecimal lowPrice = BigDecimal.valueOf(320000);
 
-            String tradeTime = "09:00:15";
+            LocalTime tradeTime = LocalTime.of(9, 0, 15);
 
             LocalDateTime updatedAt = LocalDateTime.of(
                     2026,
@@ -115,18 +117,19 @@ public class StockCurrentPriceControllerTest {
         String marketName = "KOSPI200";
         String industryName = "전기·전자";
 
-        String currentPrice = "322500";
-        String changePrice = "23500";
+        BigDecimal currentPrice = BigDecimal.valueOf(322500);
+        BigDecimal changePrice = BigDecimal.valueOf(23500);
         String changeSign = "2";
-        String changeRate = "7.86";
+        BigDecimal changeRate = BigDecimal.valueOf(7.86);
 
-        String tradeVolume = "31006148";
-        String tradeAmount = "10243164332536";
+        Long tradeVolume = 31_006_148L;
+        BigDecimal tradeAmount = BigDecimal.valueOf(10_243_164_332_536L);
 
-        String openPrice = "326000";
-        String highPrice = "339000";
-        String lowPrice = "320000";
+        BigDecimal openPrice = BigDecimal.valueOf(326000);
+        BigDecimal highPrice = BigDecimal.valueOf(339000);
+        BigDecimal lowPrice = BigDecimal.valueOf(320000);
 
+        LocalTime tradeTime = LocalTime.of(9, 0, 15);
         LocalDateTime updatedAt = LocalDateTime.of(
                 2026,
                 6,

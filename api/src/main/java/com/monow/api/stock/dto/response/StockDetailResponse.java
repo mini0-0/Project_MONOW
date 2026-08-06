@@ -1,5 +1,6 @@
 package com.monow.api.stock.dto.response;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public record StockDetailResponse(
@@ -7,15 +8,15 @@ public record StockDetailResponse(
         String stockName,
         String marketName,
         String industryName,
-        String currentPrice,
-        String changePrice,
+        BigDecimal currentPrice,
+        BigDecimal changePrice,
         String changeSign,
-        String changeRate,
-        String tradeVolume,
-        String tradeAmount,
-        String openPrice,
-        String highPrice,
-        String lowPrice,
+        BigDecimal changeRate,
+        Long tradeVolume,
+        BigDecimal tradeAmount,
+        BigDecimal openPrice,
+        BigDecimal highPrice,
+        BigDecimal lowPrice,
         LocalDateTime updatedAt,
         String webSocketEndpoint,
         String realtimeTopic
