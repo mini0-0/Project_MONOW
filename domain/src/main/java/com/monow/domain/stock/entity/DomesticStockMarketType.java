@@ -1,4 +1,4 @@
-package com.monow.api.external.kis.stockmaster;
+package com.monow.domain.stock.entity;
 
 public enum DomesticStockMarketType {
     KOSPI,

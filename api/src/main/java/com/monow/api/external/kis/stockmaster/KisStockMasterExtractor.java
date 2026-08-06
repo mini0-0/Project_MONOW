@@ -1,10 +1,10 @@
 package com.monow.api.external.kis.stockmaster;
 
+import com.monow.domain.stock.entity.DomesticStockMarketType;
 import com.monow.global.error.exception.BusinessException;
 import com.monow.global.error.model.ErrorCode;
 import org.springframework.stereotype.Component;
 
-import javax.imageio.IIOException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.EnumMap;

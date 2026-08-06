@@ -1,5 +1,6 @@
 package com.monow.api.watchlist.application;
 
+import com.monow.domain.stock.entity.DomesticStockMarketType;
 import com.monow.domain.stock.entity.Stock;
 import com.monow.domain.stock.repository.StockRepository;
 
@@ -18,7 +19,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
-
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -318,7 +318,7 @@ class WatchlistServiceTest {
                 stockCode,
                 "삼성전자보통주",
                 "삼성전자",
-                "DOMESTIC_STOCK",
+                DomesticStockMarketType.KOSPI,
                 "300",
                 "101010",
                 "주권",

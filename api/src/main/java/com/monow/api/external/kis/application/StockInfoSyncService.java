@@ -3,6 +3,7 @@ package com.monow.api.external.kis.application;
 import com.monow.api.external.kis.client.KisStockInfoClient;
 import com.monow.api.external.kis.dto.response.KisStockInfoResponse;
 import com.monow.api.external.kis.mapper.KisStockInfoMapper;
+import com.monow.domain.stock.entity.DomesticStockMarketType;
 import com.monow.domain.stock.entity.Stock;
 import com.monow.domain.stock.repository.StockRepository;
 import com.monow.global.error.exception.BusinessException;
@@ -24,7 +25,7 @@ public class StockInfoSyncService {
     private final KisStockInfoMapper kisStockInfoMapper;
 
     @Transactional
-    public void syncStockInfo(String stockCode) {
+    public void syncStockInfo(String stockCode, DomesticStockMarketType marketType) {
 
         if (stockRepository.existsByStockCode(stockCode)) {
             return;
@@ -44,7 +45,7 @@ public class StockInfoSyncService {
 
         KisStockInfoResponse.Output output = response.output();
 
-        Stock stock = kisStockInfoMapper.toEntity(output);
+        Stock stock = kisStockInfoMapper.toEntity(output, marketType);
 
         stockRepository.save(stock);
 

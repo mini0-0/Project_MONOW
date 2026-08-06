@@ -4,6 +4,7 @@ import com.monow.api.external.kis.client.KisTopViewClient;
 import com.monow.api.external.kis.dto.response.KisTopViewItem;
 
 import com.monow.api.stock.dto.response.TopViewRankingResponse;
+import com.monow.domain.stock.entity.DomesticStockMarketType;
 import com.monow.domain.stock.entity.Stock;
 import com.monow.domain.stock.repository.StockRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -135,7 +136,7 @@ class TopViewRankingServiceTest {
                 stockCode,
                 stockName,
                 stockName,
-                "KOSPI",
+                DomesticStockMarketType.KOSPI,
                 "TEST_PRODUCT_TYPE_CODE",
                 "TEST_PRODUCT_CLASS_CODE",
                 "TEST_PRODUCT_CLASS_NAME",

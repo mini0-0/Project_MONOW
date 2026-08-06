@@ -1,6 +1,6 @@
 package com.monow.api.external.kis.application;
 
-import com.monow.api.external.kis.stockmaster.DomesticStockMarketType;
+import com.monow.domain.stock.entity.DomesticStockMarketType;
 import com.monow.api.external.kis.stockmaster.KisStockMasterDownloader;
 import com.monow.api.external.kis.stockmaster.KisStockMasterExtractor;
 import com.monow.api.external.kis.stockmaster.KisStockMasterParser;
@@ -25,36 +25,46 @@ public class DomesticStockSyncService {
     private final KisStockMasterParser kisStockMasterParser;
 
     private final StockInfoSyncService stockInfoSyncService;
+
     private final StockRepository stockRepository;
 
     public void syncDomesticStocks() {
-        Map<DomesticStockMarketType, byte[]> zipFiles =
-                kisStockMasterDownloader.downloaderDomesticStock();
+        Map<DomesticStockMarketType, byte[]> zipFiles = kisStockMasterDownloader.downloaderDomesticStock();
 
-        Map<DomesticStockMarketType, byte[]> mstFiles =
-                kisStockMasterExtractor.extractMstFiles(zipFiles);
+        Map<DomesticStockMarketType, byte[]> mstFiles = kisStockMasterExtractor.extractMstFiles(zipFiles);
 
-        Map<DomesticStockMarketType, List<String>> stockCodes =
-                kisStockMasterParser.parseStockCodes(mstFiles);
+        Map<DomesticStockMarketType, List<String>> stockCodesByMarket = kisStockMasterParser.parseStockCodes(mstFiles);
 
-        List<String> distinctStockCodes = stockCodes.values()
+        List<String> allStockCodes = stockCodesByMarket.values()
                 .stream()
                 .flatMap(List::stream)
                 .distinct()
                 .toList();
 
-        Set<String> existStockCodes = stockRepository.findByStockCodeIn(distinctStockCodes)
-                .stream()
-                .map(Stock::getStockCode)
-                .collect(Collectors.toSet());
+        Set<String> existingStockCodes =
+                stockRepository.findByStockCodeIn(allStockCodes)
+                        .stream()
+                        .map(Stock::getStockCode)
+                        .collect(Collectors.toSet());
 
-        List<String> targetStockCodes = distinctStockCodes.stream()
-                .filter(stockCode -> !existStockCodes.contains(stockCode))
-                .toList();
+        for (Map.Entry<DomesticStockMarketType, List<String>> entry
+                : stockCodesByMarket.entrySet()) {
 
-        for (String stockCode : targetStockCodes) {
-            stockInfoSyncService.syncStockInfo(stockCode);
-            sleep(50);
+            DomesticStockMarketType marketType = entry.getKey();
+            List<String> stockCodes = entry.getValue();
+
+            for (String stockCode : stockCodes) {
+                if (existingStockCodes.contains(stockCode)) {
+                    continue;
+                }
+
+                stockInfoSyncService.syncStockInfo(
+                        stockCode,
+                        marketType
+                );
+
+                sleep(100);
+            }
         }
     }
 
