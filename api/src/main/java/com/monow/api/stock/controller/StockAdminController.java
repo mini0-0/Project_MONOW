@@ -28,8 +28,11 @@ public class StockAdminController {
     @PostMapping("/sync")
     public ApiResponse<Void> syncStocks(@RequestBody StockSyncRequest request) {
 
-        for (String stockCode: request.stockCodes()) {
-            stockInfoSyncService.syncStockInfo(stockCode);
+        for (StockSyncRequest.StockSyncItem stock : request.stocks()) {
+            stockInfoSyncService.syncStockInfo(
+                    stock.stockCode(),
+                    stock.marketType()
+            );
         }
 
         return ApiResponse.success();
