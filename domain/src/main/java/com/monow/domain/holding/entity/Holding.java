@@ -1,0 +1,110 @@
+package com.monow.domain.holding.entity;
+
+import com.monow.domain.account.entity.Account;
+import com.monow.domain.stock.entity.Stock;
+import com.monow.domain.user.entity.User;
+import com.monow.global.common.entity.BaseTimeEntity;
+import com.monow.global.error.exception.BusinessException;
+import com.monow.global.error.model.ErrorCode;
+import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
+@Entity
+@Table(
+        name = "holdings",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_holding_account_stock",
+                        columnNames = {"account_id", "stock_id"}
+                )
+        }
+)
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class Holding extends BaseTimeEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "account_id", nullable = false)
+    private Account account;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "stock_id", nullable = false)
+    private Stock stock;
+
+    @Column(nullable = false)
+    private Integer quantity;
+
+    @Column(name = "total_purchase_amount", nullable = false, precision = 18, scale = 2)
+    private BigDecimal totalPurchaseAmount;
+
+    private Holding(
+            User user,
+            Account account,
+            Stock stock,
+            Integer quantity,
+            BigDecimal totalPurchaseAmount
+    ) {
+        this.user = user;
+        this.account = account;
+        this.stock = stock;
+        this.quantity = quantity;
+        this.totalPurchaseAmount = totalPurchaseAmount;
+    }
+
+    public static Holding createHolding(
+            User user,
+            Account account,
+            Stock stock,
+            Integer quantity,
+            BigDecimal totalPurchaseAmount
+    ) {
+        return new Holding(
+                user,
+                account,
+                stock,
+                quantity,
+                totalPurchaseAmount
+        );
+
+    }
+
+    public void addPurchase(int purchaseQuantity, BigDecimal purchasePrice) {
+        if (purchaseQuantity <= 0) {
+            throw new BusinessException(ErrorCode.INVALID_ORDER_QUANTITY);
+        }
+
+        if (purchasePrice == null || purchasePrice.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BusinessException(ErrorCode.INVALID_PURCHASE_PRICE);
+        }
+
+        // 이번 추가 매수의 총 매입금액
+        BigDecimal additionalPurchaseAmount  = purchasePrice.multiply(BigDecimal.valueOf(purchaseQuantity));
+
+        // 추가 매수 후 전체 보유 수량
+        int newQuantity = quantity + purchaseQuantity;
+
+        // 추가 매수 후 현재 보유 종목의 총 매입금액
+        BigDecimal newTotalPurchaseAmount = totalPurchaseAmount.add(additionalPurchaseAmount );
+
+        this.quantity = newQuantity;
+        this.totalPurchaseAmount = newTotalPurchaseAmount;
+
+    }
+
+    public BigDecimal calculateAverageBuyPrice() {
+        return totalPurchaseAmount.divide(BigDecimal.valueOf(quantity), 2, RoundingMode.HALF_UP);
+    }
+}
