@@ -1,0 +1,99 @@
+package com.monow.api.trading.application;
+
+import com.monow.api.external.kis.type.CurrentPriceMarketType;
+import com.monow.api.stock.application.StockRealtimePriceCacheService;
+import com.monow.api.stock.dto.response.RealtimeStockPriceResponse;
+import com.monow.domain.account.entity.Account;
+import com.monow.domain.account.repository.AccountRepository;
+import com.monow.domain.holding.entity.Holding;
+import com.monow.domain.holding.repository.HoldingRepository;
+import com.monow.domain.order.entity.Order;
+import com.monow.domain.order.entity.OrderType;
+import com.monow.domain.order.repository.OrderRepository;
+import com.monow.domain.stock.entity.Stock;
+import com.monow.domain.stock.repository.StockRepository;
+import com.monow.domain.transaction.entity.TransactionHistory;
+import com.monow.domain.transaction.repository.TransactionHistoryRepository;
+import com.monow.domain.user.entity.User;
+import com.monow.global.error.exception.BusinessException;
+import com.monow.global.error.model.ErrorCode;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.Optional;
+
+@Service
+@RequiredArgsConstructor
+public class StockTradingService {
+
+    private final AccountRepository accountRepository;
+
+    private final StockRepository stockRepository;
+
+    private final HoldingRepository holdingRepository;
+
+    private final OrderRepository orderRepository;
+
+    private final TransactionHistoryRepository transactionHistoryRepository;
+
+    private final StockRealtimePriceCacheService stockRealtimePriceCacheService;
+
+    @Transactional
+    public void buyStock(
+            Long userId,
+            String stockCode,
+            CurrentPriceMarketType currentPriceMarketType,
+            int quantity
+    ) {
+        if (quantity <= 0) {
+            throw new BusinessException(ErrorCode.INVALID_ORDER_QUANTITY);
+        }
+
+        Account account = accountRepository.findByUserId(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ACCOUNT_NOT_FOUND));
+
+        User user = account.getUser();
+
+        Stock stock = stockRepository.findByStockCode(stockCode)
+                .orElseThrow(() -> new BusinessException(ErrorCode.STOCK_NOT_FOUND));
+
+
+        RealtimeStockPriceResponse response = stockRealtimePriceCacheService.findLatestPrice(currentPriceMarketType, stockCode);
+
+        BigDecimal executionPrice = response.currentPrice();
+
+        if (executionPrice == null || executionPrice.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BusinessException(ErrorCode.REALTIME_PRICE_INVALID_RESPONSE);
+        }
+
+        BigDecimal totalAmount = executionPrice.multiply(BigDecimal.valueOf(quantity));
+        BigDecimal beforeBalance = account.getBalance();
+        account.deductBalance(totalAmount);
+        BigDecimal afterBalance = account.getBalance();
+
+        Optional<Holding> existingHolding = holdingRepository.findByAccountAndStock(account, stock);
+
+        if (existingHolding.isEmpty()) {
+            Holding holding = Holding.createHolding(user, account, stock, quantity, totalAmount);
+
+            holdingRepository.save(holding);
+        } else {
+            Holding holding = existingHolding.get();
+            holding.addPurchase(quantity, executionPrice);
+        }
+
+
+        LocalDateTime now = LocalDateTime.now();
+
+        Order order = Order.createOrder(user, account, stock, quantity, executionPrice, totalAmount, now, now);
+        orderRepository.save(order);
+
+        String description = stock.getStockName() + " " + quantity + "주 매수";
+
+        TransactionHistory transactionHistory = TransactionHistory.createBuyHistory(user, account, order, totalAmount, beforeBalance, afterBalance, description);
+        transactionHistoryRepository.save(transactionHistory);
+    }
+}
