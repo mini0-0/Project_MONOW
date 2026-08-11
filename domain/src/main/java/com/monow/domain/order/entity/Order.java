@@ -87,7 +87,7 @@ public class Order extends BaseTimeEntity {
         this.executedAt = executedAt;
     }
 
-    public static Order createOrder(
+    public static Order createBuyOrder(
             User user,
             Account account,
             Stock stock,
@@ -102,6 +102,30 @@ public class Order extends BaseTimeEntity {
                 account,
                 stock,
                 OrderType.BUY,
+                OrderStatus.EXECUTED,
+                quantity,
+                orderPrice,
+                totalAmount,
+                requestedAt,
+                executedAt
+        );
+    }
+
+    public static Order createSellOrder(
+            User user,
+            Account account,
+            Stock stock,
+            Integer quantity,
+            BigDecimal orderPrice,
+            BigDecimal totalAmount,
+            LocalDateTime requestedAt,
+            LocalDateTime executedAt
+    ) {
+        return new Order(
+                user,
+                account,
+                stock,
+                OrderType.SELL,
                 OrderStatus.EXECUTED,
                 quantity,
                 orderPrice,

@@ -81,7 +81,11 @@ public class Holding extends BaseTimeEntity {
 
     }
 
-    public void addPurchase(int purchaseQuantity, BigDecimal purchasePrice) {
+    public BigDecimal calculateAverageBuyPrice() {
+        return totalPurchaseAmount.divide(BigDecimal.valueOf(quantity), 2, RoundingMode.HALF_UP);
+    }
+
+    public void buy(int purchaseQuantity, BigDecimal purchasePrice) {
         if (purchaseQuantity <= 0) {
             throw new BusinessException(ErrorCode.INVALID_ORDER_QUANTITY);
         }
@@ -97,14 +101,38 @@ public class Holding extends BaseTimeEntity {
         int newQuantity = quantity + purchaseQuantity;
 
         // 추가 매수 후 현재 보유 종목의 총 매입금액
-        BigDecimal newTotalPurchaseAmount = totalPurchaseAmount.add(additionalPurchaseAmount );
+        BigDecimal newTotalPurchaseAmount = totalPurchaseAmount.add(additionalPurchaseAmount);
 
         this.quantity = newQuantity;
         this.totalPurchaseAmount = newTotalPurchaseAmount;
 
     }
 
-    public BigDecimal calculateAverageBuyPrice() {
-        return totalPurchaseAmount.divide(BigDecimal.valueOf(quantity), 2, RoundingMode.HALF_UP);
+    public void sell(int sellQuantity) {
+        if (sellQuantity <= 0) {
+            throw new BusinessException(ErrorCode.INVALID_ORDER_QUANTITY);
+        }
+
+        if (quantity < sellQuantity) {
+            throw new BusinessException(ErrorCode.INVALID_ORDER_QUANTITY);
+        }
+
+        // 매도 전 평균 매입가 계산
+        BigDecimal averageBuyPrice = calculateAverageBuyPrice();
+
+        // 이번에 매도하는 수량에 해당하는 기존 매입 원가
+        BigDecimal soldPurchaseAmount = averageBuyPrice.multiply(BigDecimal.valueOf(sellQuantity));
+
+        // 매도 후 남은 보유 수량
+        int newQuantity = quantity - sellQuantity;
+
+        // 매도 후 남은 주식의 총 매입 원가
+        BigDecimal newTotalPurchaseAmount = totalPurchaseAmount.subtract(soldPurchaseAmount);
+
+        this.quantity = newQuantity;
+        this.totalPurchaseAmount = newTotalPurchaseAmount;
+
+
     }
+
 }

@@ -90,4 +90,25 @@ public class TransactionHistory extends BaseTimeEntity {
         );
 
     }
+
+    public static TransactionHistory createSellHistory(
+            User user,
+            Account account,
+            Order order,
+            BigDecimal amount,
+            BigDecimal beforeBalance,
+            BigDecimal afterBalance,
+            String description
+    ) {
+        return new TransactionHistory(
+                user,
+                account,
+                order,
+                TransactionHistoryType.SELL,
+                amount,
+                beforeBalance,
+                afterBalance,
+                description
+        );
+    }
 }

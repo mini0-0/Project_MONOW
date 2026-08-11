@@ -70,4 +70,17 @@ public class Account extends BaseTimeEntity {
         balance = balance.subtract(amount);
 
     }
+
+    public void addBalance(BigDecimal amount) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BusinessException(ErrorCode.INVALID_DEDUCTION_AMOUNT);
+        }
+
+        if (balance.compareTo(amount) < 0) {
+            throw new BusinessException(ErrorCode.INSUFFICIENT_BALANCE);
+        }
+
+        balance = balance.add(amount);
+
+    }
 }
