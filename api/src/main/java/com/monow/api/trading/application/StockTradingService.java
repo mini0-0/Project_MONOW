@@ -8,7 +8,6 @@ import com.monow.domain.account.repository.AccountRepository;
 import com.monow.domain.holding.entity.Holding;
 import com.monow.domain.holding.repository.HoldingRepository;
 import com.monow.domain.order.entity.Order;
-import com.monow.domain.order.entity.OrderType;
 import com.monow.domain.order.repository.OrderRepository;
 import com.monow.domain.stock.entity.Stock;
 import com.monow.domain.stock.repository.StockRepository;
@@ -45,7 +44,7 @@ public class StockTradingService {
     public void buyStock(
             Long userId,
             String stockCode,
-            CurrentPriceMarketType currentPriceMarketType,
+            CurrentPriceMarketType marketType,
             int quantity
     ) {
         if (quantity <= 0) {
@@ -61,7 +60,7 @@ public class StockTradingService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.STOCK_NOT_FOUND));
 
 
-        RealtimeStockPriceResponse response = stockRealtimePriceCacheService.findLatestPrice(currentPriceMarketType, stockCode);
+        RealtimeStockPriceResponse response = stockRealtimePriceCacheService.findLatestPrice(marketType, stockCode);
 
         BigDecimal executionPrice = response.currentPrice();
 
@@ -82,13 +81,13 @@ public class StockTradingService {
             holdingRepository.save(holding);
         } else {
             Holding holding = existingHolding.get();
-            holding.addPurchase(quantity, executionPrice);
+            holding.buy(quantity, executionPrice);
         }
 
 
         LocalDateTime now = LocalDateTime.now();
 
-        Order order = Order.createOrder(user, account, stock, quantity, executionPrice, totalAmount, now, now);
+        Order order = Order.createBuyOrder(user, account, stock, quantity, executionPrice, totalAmount, now, now);
         orderRepository.save(order);
 
         String description = stock.getStockName() + " " + quantity + "주 매수";
@@ -96,4 +95,55 @@ public class StockTradingService {
         TransactionHistory transactionHistory = TransactionHistory.createBuyHistory(user, account, order, totalAmount, beforeBalance, afterBalance, description);
         transactionHistoryRepository.save(transactionHistory);
     }
+
+    @Transactional
+    public void sellStock(
+            Long userId,
+            String stockCode,
+            CurrentPriceMarketType marketType,
+            int quantity
+    ) {
+
+        if (quantity <= 0) {
+            throw new BusinessException(ErrorCode.INVALID_ORDER_QUANTITY);
+        }
+
+        Account account = accountRepository.findByUserId(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ACCOUNT_NOT_FOUND));
+
+        User user = account.getUser();
+
+        Stock stock = stockRepository.findByStockCode(stockCode)
+                .orElseThrow(() -> new BusinessException(ErrorCode.STOCK_NOT_FOUND));
+
+        RealtimeStockPriceResponse response = stockRealtimePriceCacheService.findLatestPrice(marketType, stockCode);
+
+        BigDecimal executionPrice = response.currentPrice();
+
+        if (executionPrice == null || executionPrice.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BusinessException(ErrorCode.REALTIME_PRICE_INVALID_RESPONSE);
+        }
+
+        Holding holding = holdingRepository.findByAccountAndStock(account, stock)
+                .orElseThrow(() -> new BusinessException(ErrorCode.HOLDING_NOT_FOUND));
+
+        BigDecimal totalAmount = executionPrice.multiply(BigDecimal.valueOf(quantity));
+        BigDecimal beforeBalance = account.getBalance();
+
+        holding.sell(quantity);
+        account.addBalance(totalAmount);
+
+        BigDecimal afterBalance = account.getBalance();
+
+        LocalDateTime now = LocalDateTime.now();
+
+        Order order = Order.createSellOrder(user, account, stock, quantity, executionPrice, totalAmount, now, now);
+        orderRepository.save(order);
+
+        String description = stock.getStockName() + " " + quantity + "주 매도";
+
+        TransactionHistory transactionHistory = TransactionHistory.createSellHistory(user, account, order, totalAmount, beforeBalance, afterBalance, description);
+        transactionHistoryRepository.save(transactionHistory);
+    }
+
 }
