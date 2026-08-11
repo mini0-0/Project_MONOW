@@ -8,6 +8,7 @@ import com.monow.domain.account.repository.AccountRepository;
 import com.monow.domain.holding.entity.Holding;
 import com.monow.domain.holding.repository.HoldingRepository;
 import com.monow.domain.order.entity.Order;
+import com.monow.domain.order.entity.OrderType;
 import com.monow.domain.order.repository.OrderRepository;
 import com.monow.domain.stock.entity.DomesticStockMarketType;
 import com.monow.domain.stock.entity.Stock;
@@ -77,7 +78,6 @@ class StockTradingServiceTest {
     @Nested
     @DisplayName("주식 매수")
     class BuyStock {
-
         /*
          * 테스트 시나리오
          * 사용자가 아직 보유하지 않은 주식 종목을 정상 수량과 실시간 현재가로 매수하는 경우
@@ -254,6 +254,7 @@ class StockTradingServiceTest {
             assertThat(savedOrder.getQuantity()).isEqualTo(addPurchaseQuantity);
             assertThat(savedOrder.getOrderPrice()).isEqualByComparingTo(currentPrice);
             assertThat(savedOrder.getTotalAmount()).isEqualByComparingTo(totalAmount);
+            assertThat(savedOrder.getOrderType()).isEqualTo(OrderType.BUY);
 
             // TransactionHistory 저장 확인
             ArgumentCaptor<TransactionHistory> transactionCaptor = ArgumentCaptor.forClass(TransactionHistory.class);
@@ -337,6 +338,7 @@ class StockTradingServiceTest {
             assertThat(savedOrder.getQuantity()).isEqualTo(quantity);
             assertThat(savedOrder.getOrderPrice()).isEqualByComparingTo(currentPrice);
             assertThat(savedOrder.getTotalAmount()).isEqualByComparingTo(totalAmount);
+            assertThat(savedOrder.getOrderType()).isEqualTo(OrderType.BUY);
 
             // TransactionHistory 저장 확인
             ArgumentCaptor<TransactionHistory> transactionCaptor = ArgumentCaptor.forClass(TransactionHistory.class);
@@ -372,10 +374,10 @@ class StockTradingServiceTest {
                     stockTradingService.buyStock(USER_ID, STOCK_CODE, MARKET_TYPE, quantity))
                     .isInstanceOf(BusinessException.class);
 
-           verify(accountRepository, never()).findByUserId(any());
-           verify(stockRepository, never()).findByStockCode(any());
-           verify(stockRealtimePriceCacheService, never()).findLatestPrice(any(), any());
-           verify(holdingRepository, never()).findByAccountAndStock(any(), any());
+            verify(accountRepository, never()).findByUserId(any());
+            verify(stockRepository, never()).findByStockCode(any());
+            verify(stockRealtimePriceCacheService, never()).findLatestPrice(any(), any());
+            verify(holdingRepository, never()).findByAccountAndStock(any(), any());
             verify(holdingRepository, never()).save(any(Holding.class));
             verify(orderRepository, never()).save(any(Order.class));
             verify(transactionHistoryRepository, never()).save(any(TransactionHistory.class));
@@ -546,6 +548,295 @@ class StockTradingServiceTest {
             assertThat(account.getBalance()).isEqualByComparingTo(SEED_MONEY);
 
         }
+
+
+    @Nested
+    @DisplayName("주식 매도")
+    class SellStock {
+        /*
+         * 테스트 시나리오
+         * 사용자가 보유하고 있는 주식의 일부 수량을 정상적인 실시간 현재가로 매도하는 경우
+         *
+         * 실행 흐름
+         * 계좌 조회
+         * 종목 조회
+         * 실시간 현재가 조회
+         * 기존 보유 종목 조회
+         * 매도 수량만큼 보유 수량 감소
+         * 매도 총 금액만큼 계좌 잔액 증가
+         * 매도 주문 및 거래 내역 저장
+         *
+         * 검증 대상
+         * 계좌 잔액 정상 증가
+         * Holding의 보유 수량 정상 감소
+         * Order의 주문 수량, 주문 가격, 총 주문 금액, 주문 유형
+         * TransactionHistory의 거래 금액과 거래 전후 잔액
+         */
+        @Test
+        @DisplayName("[성공] - 보유 종목 일부 매도 시 보유 수량과 계좌 잔액 갱신")
+        void sellStock_partialQuantity_success() {
+            // Given
+            int existingQuantity = 10;
+            int sellQuantity = 5;
+
+            BigDecimal currentPrice = BigDecimal.valueOf(322_500L);
+            BigDecimal totalAmount = currentPrice.multiply(BigDecimal.valueOf(sellQuantity));
+
+            BigDecimal existingTotalPurchaseAmount = BigDecimal.valueOf(2_800_000L);
+
+            BigDecimal beforeBalance = BigDecimal.valueOf(93_500_000L);
+            BigDecimal expectedBalance = beforeBalance.add(totalAmount);
+
+            int expectedQuantity = existingQuantity - sellQuantity;
+
+            User user = createUser();
+            Account account = createAccount(user, beforeBalance);
+            Stock stock = createStock();
+            Holding holding = Holding.createHolding(
+                    user,
+                    account,
+                    stock,
+                    existingQuantity,
+                    existingTotalPurchaseAmount
+            );
+
+            RealtimeStockPriceResponse response = createRealtimePriceResponse(currentPrice);
+
+            given(accountRepository.findByUserId(USER_ID))
+                    .willReturn(Optional.of(account));
+
+            given(stockRepository.findByStockCode(STOCK_CODE))
+                    .willReturn(Optional.of(stock));
+
+            given(stockRealtimePriceCacheService.findLatestPrice(MARKET_TYPE, STOCK_CODE))
+                    .willReturn(response);
+
+            given(holdingRepository.findByAccountAndStock(account, stock))
+                    .willReturn(Optional.of(holding));
+
+
+            // When
+            log.info("주식 매도 실행 전 - currentPrice={}, beforeBalance={}", currentPrice, account.getBalance());
+            stockTradingService.sellStock(USER_ID, STOCK_CODE, MARKET_TYPE, sellQuantity);
+            log.info("주식 매도 실행 후 - currentPrice={}, afterBalance={}", currentPrice, account.getBalance());
+
+            // Then
+            assertThat(account.getBalance()).isEqualByComparingTo(expectedBalance);
+            assertThat(holding.getQuantity()).isEqualTo(expectedQuantity);
+
+            verify(accountRepository).findByUserId(USER_ID);
+            verify(stockRepository).findByStockCode(STOCK_CODE);
+            verify(stockRealtimePriceCacheService).findLatestPrice(MARKET_TYPE, STOCK_CODE);
+            verify(holdingRepository).findByAccountAndStock(account, stock);
+
+            // Holding 저장 확인
+            assertThat(holding.getQuantity()).isEqualTo(expectedQuantity);
+
+            verify(holdingRepository, never()).save(any(Holding.class));
+
+
+            // Order 저장 확인
+            ArgumentCaptor<Order> orderCaptor = ArgumentCaptor.forClass(Order.class);
+
+            verify(orderRepository).save(orderCaptor.capture());
+
+            Order savedOrder = orderCaptor.getValue();
+
+            assertThat(savedOrder.getQuantity()).isEqualTo(sellQuantity);
+            assertThat(savedOrder.getOrderPrice()).isEqualByComparingTo(currentPrice);
+            assertThat(savedOrder.getTotalAmount()).isEqualByComparingTo(totalAmount);
+            assertThat(savedOrder.getOrderType()).isEqualTo(OrderType.SELL);
+
+
+            // TransactionHistory 저장 확인
+            ArgumentCaptor<TransactionHistory> transactionCaptor = ArgumentCaptor.forClass(TransactionHistory.class);
+
+            verify(transactionHistoryRepository).save(transactionCaptor.capture());
+
+            TransactionHistory savedTransaction = transactionCaptor.getValue();
+
+            assertThat(savedTransaction.getAmount()).isEqualByComparingTo(totalAmount);
+            assertThat(savedTransaction.getBeforeBalance()).isEqualByComparingTo(beforeBalance);
+            assertThat(savedTransaction.getAfterBalance()).isEqualByComparingTo(expectedBalance);
+
+        }
+
+        /*
+         * 테스트 시나리오
+         * 사용자가 0 또는 음수 수량으로 주식 매도를 요청하는 경우
+         *
+         * 실행 흐름
+         * sellStock 진입 직후 주문 수량 검증
+         * INVALID_ORDER_QUANTITY 예외 발생
+         * 계좌, 종목, 실시간 현재가, 보유 종목 조회 미실행
+         *
+         * 검증 대상
+         * 0과 음수 수량에서 BusinessException 발생
+         * Account, Stock, Holding 조회 미발생
+         * 실시간 현재가 조회 미발생
+         * Order 및 TransactionHistory 저장 미발생
+         */
+        @ParameterizedTest
+        @ValueSource(ints = {0, -1})
+        @DisplayName("[실패] - 주문 수량이 0 이하인 경우 예외 발생")
+        void sellStock_whenQuantityIsZeroOrNegative_throwsException(int quantity) {
+            // When & Then
+            assertThatThrownBy(() ->
+                    stockTradingService.sellStock(USER_ID, STOCK_CODE, MARKET_TYPE, quantity))
+                    .isInstanceOf(BusinessException.class);
+
+            verify(accountRepository, never()).findByUserId(USER_ID);
+            verify(stockRepository, never()).findByStockCode(STOCK_CODE);
+            verify(stockRealtimePriceCacheService, never()).findLatestPrice(any(), any());
+            verify(holdingRepository, never()).findByAccountAndStock(any(), any());
+            verify(orderRepository, never()).save(any(Order.class));
+            verify(transactionHistoryRepository, never()).save(any(TransactionHistory.class));
+
+        }
+
+        /*
+         * 테스트 시나리오
+         * 계좌와 종목은 존재하지만 사용자가 해당 종목을 보유하고 있지 않은 경우
+         *
+         * 실행 흐름
+         * 계좌 조회 성공
+         * 종목 조회 성공
+         * 실시간 현재가 조회 성공
+         * 보유 종목 조회 결과 없음
+         * HOLDING_NOT_FOUND 예외 발생
+         * 매도 처리와 저장 로직 미실행
+         *
+         * 검증 대상
+         * 보유 종목이 없는 경우 BusinessException 발생
+         * Account, Stock, 실시간 현재가, Holding 조회 정상 수행
+         * 계좌 잔액 변경 미발생
+         * Order 및 TransactionHistory 저장 미발생
+         */
+        @Test
+        @DisplayName("[실패] - 보유하지 않은 종목을 매도하는 경우 예외 발생")
+        void sellStock_whenHoldingNotFound_throwsException() {
+            // Given
+            int sellQuantity = 5;
+
+            BigDecimal currentPrice = BigDecimal.valueOf(322_500L);
+            BigDecimal beforeBalance = BigDecimal.valueOf(93_500_000L);
+
+            User user = createUser();
+            Account account = createAccount(user, beforeBalance);
+            Stock stock = createStock();
+
+            RealtimeStockPriceResponse response = createRealtimePriceResponse(currentPrice);
+
+            given(accountRepository.findByUserId(USER_ID))
+                    .willReturn(Optional.of(account));
+
+            given(stockRepository.findByStockCode(STOCK_CODE))
+                    .willReturn(Optional.of(stock));
+
+            given(stockRealtimePriceCacheService.findLatestPrice(MARKET_TYPE, STOCK_CODE))
+                    .willReturn(response);
+
+            given(holdingRepository.findByAccountAndStock(account, stock))
+                    .willReturn(Optional.empty());
+
+
+            // When
+            assertThatThrownBy(() ->
+                    stockTradingService.sellStock(USER_ID, STOCK_CODE, MARKET_TYPE, sellQuantity))
+                    .isInstanceOf(BusinessException.class);
+
+            // Then
+            verify(accountRepository).findByUserId(USER_ID);
+            verify(stockRepository).findByStockCode(STOCK_CODE);
+            verify(stockRealtimePriceCacheService).findLatestPrice(MARKET_TYPE, STOCK_CODE);
+            verify(holdingRepository).findByAccountAndStock(account, stock);
+
+            verify(holdingRepository, never()).save(any(Holding.class));
+            verify(orderRepository, never()).save(any(Order.class));
+            verify(transactionHistoryRepository, never()).save(any(TransactionHistory.class));
+
+
+        }
+
+        /*
+         * 테스트 시나리오
+         * 사용자가 실제 보유 수량보다 많은 수량을 매도하려는 경우
+         *
+         * 실행 흐름
+         * 계좌 조회 성공
+         * 종목 조회 성공
+         * 실시간 현재가 조회 성공
+         * 기존 보유 종목 조회 성공
+         * Holding의 매도 수량 검증 실패
+         * 매도 처리 중단 및 예외 발생
+         *
+         * 검증 대상
+         * 보유 수량 초과 매도 요청 시 BusinessException 발생
+         * Holding의 기존 보유 수량과 총 매입 금액 불변
+         * 계좌 잔액 불변
+         * Order 및 TransactionHistory 저장 미발생
+         */
+        @Test
+        @DisplayName("[실패] - 보유 수량보다 많은 수량을 매도하는 경우 예외 발생")
+        void sellStock_whenSellQuantityExceedsHoldingQuantity_throwsException() {
+            // Given
+            int existingQuantity = 5;
+            int sellQuantity = 10;
+
+            BigDecimal currentPrice = BigDecimal.valueOf(322_500L);
+            BigDecimal existingTotalPurchaseAmount = BigDecimal.valueOf(1_400_000L);
+            BigDecimal beforeBalance = BigDecimal.valueOf(93_500_000L);
+
+            User user = createUser();
+            Account account = createAccount(user, beforeBalance);
+            Stock stock = createStock();
+
+            Holding holding = Holding.createHolding(
+                    user,
+                    account,
+                    stock,
+                    existingQuantity,
+                    existingTotalPurchaseAmount
+            );
+
+            RealtimeStockPriceResponse response =
+                    createRealtimePriceResponse(currentPrice);
+
+            given(accountRepository.findByUserId(USER_ID))
+                    .willReturn(Optional.of(account));
+
+            given(stockRepository.findByStockCode(STOCK_CODE))
+                    .willReturn(Optional.of(stock));
+
+            given(stockRealtimePriceCacheService.findLatestPrice(MARKET_TYPE, STOCK_CODE))
+                    .willReturn(response);
+
+            given(holdingRepository.findByAccountAndStock(account, stock))
+                    .willReturn(Optional.of(holding));
+
+
+            // When
+            assertThatThrownBy(() ->
+                    stockTradingService.sellStock(USER_ID, STOCK_CODE, MARKET_TYPE, sellQuantity))
+                    .isInstanceOf(BusinessException.class);
+
+            // Then
+            assertThat(holding.getQuantity()).isEqualTo(existingQuantity);
+            assertThat(holding.getTotalPurchaseAmount()).isEqualByComparingTo(existingTotalPurchaseAmount);
+            assertThat(account.getBalance()).isEqualByComparingTo(beforeBalance);
+
+            verify(accountRepository).findByUserId(USER_ID);
+            verify(stockRepository).findByStockCode(STOCK_CODE);
+            verify(stockRealtimePriceCacheService).findLatestPrice(MARKET_TYPE, STOCK_CODE);
+            verify(holdingRepository).findByAccountAndStock(account, stock);
+
+            verify(orderRepository, never()).save(any(Order.class));
+            verify(transactionHistoryRepository, never()).save(any(TransactionHistory.class));
+        }
+
+
+
+    }
 
         private User createUser() {
             return User.createUser("test@test.com", "1234", "홍길동", "워렌버핏");
