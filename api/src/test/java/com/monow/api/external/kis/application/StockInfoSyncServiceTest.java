@@ -4,6 +4,7 @@ import com.monow.api.external.kis.client.KisStockInfoClient;
 import com.monow.api.external.kis.dto.response.KisStockInfoResponse;
 import com.monow.api.external.kis.dto.response.KisTokenResponse;
 import com.monow.api.external.kis.mapper.KisStockInfoMapper;
+import com.monow.domain.stock.entity.DomesticStockMarketType;
 import com.monow.domain.stock.entity.Stock;
 import com.monow.domain.stock.repository.StockRepository;
 import com.monow.global.error.exception.BusinessException;
@@ -51,6 +52,7 @@ public class StockInfoSyncServiceTest {
         @DisplayName("[성공] - 종목 정보를 조회하여 저장")
         void syncStockInfo_whenStockDoesNotExist_savesNewStock() {
             // Given
+            DomesticStockMarketType marketType = DomesticStockMarketType.KOSPI;
             KisTokenResponse tokenResponse = new KisTokenResponse(
                     ACCESS_TOKEN,
                     "Bearer",
@@ -83,7 +85,7 @@ public class StockInfoSyncServiceTest {
                     STOCK_CODE,
                     "삼성전자보통주",
                     "삼성전자",
-                    "DOMESTIC_STOCK",
+                    marketType,
                     "300",
                     "101010",
                     "주권",
@@ -100,18 +102,18 @@ public class StockInfoSyncServiceTest {
             given(kisStockInfoClient.fetchStockInfo(ACCESS_TOKEN, STOCK_CODE))
                     .willReturn(response);
 
-            given(kisStockInfoMapper.toEntity(output))
+            given(kisStockInfoMapper.toEntity(output, marketType))
 
                     .willReturn(stock);
 
             // When
-            stockInfoSyncService.syncStockInfo(STOCK_CODE);
+            stockInfoSyncService.syncStockInfo(STOCK_CODE, marketType);
 
             // Then
             verify(stockRepository).existsByStockCode(STOCK_CODE);
             verify(kisAccessTokenProvider).getAccessToken();
             verify(kisStockInfoClient).fetchStockInfo(ACCESS_TOKEN, STOCK_CODE);
-            verify(kisStockInfoMapper).toEntity(output);
+            verify(kisStockInfoMapper).toEntity(output, marketType);
             verify(stockRepository).save(stock);
 
         }
@@ -120,17 +122,18 @@ public class StockInfoSyncServiceTest {
         @DisplayName("[스킵] - 이미 저장된 종목이면 API 조회와 저장을 수행하지 않음")
         void syncStockInfo_whenStockAlreadyExists_skipsApiCallAndSave() {
             // Given
+            DomesticStockMarketType marketType = DomesticStockMarketType.KOSPI;
             given(stockRepository.existsByStockCode(STOCK_CODE))
                     .willReturn(true);
 
             // When
-            stockInfoSyncService.syncStockInfo(STOCK_CODE);
+            stockInfoSyncService.syncStockInfo(STOCK_CODE, marketType);
 
             // Then
             verify(stockRepository).existsByStockCode(STOCK_CODE);
             verify(kisAccessTokenProvider, never()).getAccessToken();
             verify(kisStockInfoClient, never()).fetchStockInfo(any(), any());
-            verify(kisStockInfoMapper, never()).toEntity(any());
+            verify(kisStockInfoMapper, never()).toEntity(any(), any());
             verify(stockRepository, never()).save(any());
 
         }
@@ -139,6 +142,7 @@ public class StockInfoSyncServiceTest {
         @DisplayName("[예외] - KIS 종목 정보 응답 코드가 실패면 Stock을 저장하지 않음")
         void syncStockInfo_whenKisResponseFails_doesNotSaveStock() {
             // Given
+            DomesticStockMarketType marketType = DomesticStockMarketType.KOSPI;
             given(stockRepository.existsByStockCode(STOCK_CODE))
                     .willReturn(false);
             KisTokenResponse tokenResponse = new KisTokenResponse(
@@ -158,7 +162,7 @@ public class StockInfoSyncServiceTest {
                     .willReturn(failResponse);
 
             // When & Then
-            assertThatThrownBy(() -> stockInfoSyncService.syncStockInfo(STOCK_CODE))
+            assertThatThrownBy(() -> stockInfoSyncService.syncStockInfo(STOCK_CODE, marketType))
                     .isInstanceOf(BusinessException.class)
                     .satisfies(exception -> {
                         BusinessException businessException = (BusinessException) exception;
@@ -168,7 +172,7 @@ public class StockInfoSyncServiceTest {
             verify(stockRepository).existsByStockCode(STOCK_CODE);
             verify(kisAccessTokenProvider).getAccessToken();
             verify(kisStockInfoClient).fetchStockInfo(ACCESS_TOKEN, STOCK_CODE);
-            verify(kisStockInfoMapper, never()).toEntity(any());
+            verify(kisStockInfoMapper, never()).toEntity(any(), any());
             verify(stockRepository, never()).save(any());
 
         }
@@ -177,6 +181,7 @@ public class StockInfoSyncServiceTest {
         @DisplayName("[예외] - KIS 응답은 성공이지만 output이 없으면 Stock을 저장하지 않음")
         void syncStockInfo_whenResponseOutputIsNull_doesNotSaveStock() {
             // Given
+            DomesticStockMarketType marketType = DomesticStockMarketType.KOSPI;
             given(stockRepository.existsByStockCode(STOCK_CODE))
                     .willReturn(false);
             KisTokenResponse tokenResponse = new KisTokenResponse(
@@ -196,7 +201,7 @@ public class StockInfoSyncServiceTest {
                     .willReturn(response);
 
             // When & Then
-            assertThatThrownBy(() -> stockInfoSyncService.syncStockInfo(STOCK_CODE))
+            assertThatThrownBy(() -> stockInfoSyncService.syncStockInfo(STOCK_CODE, marketType))
                     .isInstanceOf(BusinessException.class)
                     .satisfies(exception -> {
                         BusinessException businessException = (BusinessException) exception;
@@ -206,7 +211,7 @@ public class StockInfoSyncServiceTest {
             verify(stockRepository).existsByStockCode(STOCK_CODE);
             verify(kisAccessTokenProvider).getAccessToken();
             verify(kisStockInfoClient).fetchStockInfo(ACCESS_TOKEN, STOCK_CODE);
-            verify(kisStockInfoMapper, never()).toEntity(any());
+            verify(kisStockInfoMapper, never()).toEntity(any(), any());
             verify(stockRepository, never()).save(any());
 
         }

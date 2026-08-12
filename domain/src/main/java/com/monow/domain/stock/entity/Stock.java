@@ -31,8 +31,9 @@ public class Stock extends BaseTimeEntity {
     @Column(name = "stock_name", nullable = false, length = 100)
     private String stockName;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "market_type", nullable = false,length = 30)
-    private String marketType;
+    private DomesticStockMarketType marketType;
 
     @Column(name = "product_type_code", length = 20)
     private String productTypeCode;
@@ -50,7 +51,7 @@ public class Stock extends BaseTimeEntity {
     private String investmentProductTypeName;
 
     @Column(name = "is_active")
-    private  Boolean isActive;
+    private Boolean isActive;
 
     private Stock(
             String productNumber,
@@ -58,7 +59,7 @@ public class Stock extends BaseTimeEntity {
             String stockCode,
             String productName,
             String stockName,
-            String marketType,
+            DomesticStockMarketType marketType,
             String productTypeCode,
             String productClassCode,
             String productClassName,
@@ -85,7 +86,7 @@ public class Stock extends BaseTimeEntity {
             String stockCode,
             String productName,
             String stockName,
-            String marketType,
+            DomesticStockMarketType marketType,
             String productTypeCode,
             String productClassCode,
             String productClassName,

@@ -1,5 +1,6 @@
 package com.monow.api.external.kis.application;
 
+import com.monow.domain.stock.entity.DomesticStockMarketType;
 import com.monow.domain.stock.entity.Stock;
 import com.monow.domain.stock.repository.StockRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -34,9 +35,10 @@ public class StockSyncIntegrationTest {
         void syncStockInfo_whenStockDoesNotExist_savesNewStock() {
             // Given
             String stockCode = "005930";
+            DomesticStockMarketType marketType = DomesticStockMarketType.KOSPI;
 
             // When
-            stockInfoSyncService.syncStockInfo(stockCode);
+            stockInfoSyncService.syncStockInfo(stockCode, marketType);
 
             // Then
             List<Stock> savedStocks = stockRepository.findByStockCodeIn(List.of(stockCode));
@@ -62,12 +64,13 @@ public class StockSyncIntegrationTest {
         void syncStockInfo_whenStockAlreadyExists_doesNotCreateDuplicate() {
             // Given
             String stockCode = "005930";
+            DomesticStockMarketType marketType = DomesticStockMarketType.KOSPI;
 
-            stockInfoSyncService.syncStockInfo(stockCode);
+            stockInfoSyncService.syncStockInfo(stockCode, marketType);
             long beforeCount = stockRepository.countByStockCode(stockCode);
 
             // When
-            stockInfoSyncService.syncStockInfo(stockCode);
+            stockInfoSyncService.syncStockInfo(stockCode, marketType);
 
             // Then
             long afterCount = stockRepository.countByStockCode(stockCode);

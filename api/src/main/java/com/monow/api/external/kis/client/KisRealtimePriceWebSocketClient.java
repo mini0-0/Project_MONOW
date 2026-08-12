@@ -23,6 +23,7 @@ import org.springframework.web.socket.client.standard.StandardWebSocketClient;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -408,21 +409,40 @@ public class KisRealtimePriceWebSocketClient {
         );
     }
     private RealtimeStockPriceResponse convertToRealtimeResponse(String[] fields) {
-        return new RealtimeStockPriceResponse(
-                CurrentPriceMarketType.KRX,
-                fields[0],
-                fields[2],
-                fields[4],
-                fields[3],
-                fields[5],
-                fields[13],
-                fields[14],
-                fields[7],
-                fields[8],
-                fields[9],
-                formatTradeTime(fields[1]),
-                LocalDateTime.now(clock)
-        );
+        try {
+            return new RealtimeStockPriceResponse(
+                    CurrentPriceMarketType.KRX,
+                    fields[0],
+                    new BigDecimal(fields[2]),
+                    new BigDecimal(fields[4]),
+                    fields[3],
+                    new BigDecimal(fields[5]),
+                    Long.parseLong(fields[13]),
+                    new BigDecimal(fields[14]),
+                    new BigDecimal(fields[7]),
+                    new BigDecimal(fields[8]),
+                    new BigDecimal(fields[9]),
+                    parseTradeTime(fields[1]),
+                    LocalDateTime.now(clock)
+            );
+        } catch (NumberFormatException exception) {
+            throw invalidRealtimeDataException();
+        }
+    }
+
+    private LocalTime parseTradeTime(String rawTradeTime) {
+        if (rawTradeTime == null || rawTradeTime.isBlank()) {
+            throw invalidRealtimeDataException();
+        }
+
+        try {
+            return LocalTime.parse(
+                    rawTradeTime,
+                    KIS_TRADE_TIME_FORMATTER
+            );
+        } catch (Exception exception) {
+            throw invalidRealtimeDataException();
+        }
     }
 
     /**

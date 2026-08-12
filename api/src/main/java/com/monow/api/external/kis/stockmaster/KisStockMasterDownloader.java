@@ -1,5 +1,6 @@
 package com.monow.api.external.kis.stockmaster;
 
+import com.monow.domain.stock.entity.DomesticStockMarketType;
 import com.monow.global.error.exception.BusinessException;
 import com.monow.global.error.model.ErrorCode;
 import org.springframework.stereotype.Component;
@@ -19,9 +20,7 @@ public class KisStockMasterDownloader {
         this.restClient = RestClient.builder().build();
         this.downloadUrls = Map.of(
                 DomesticStockMarketType.KOSPI, "https://new.real.download.dws.co.kr/common/master/kospi_code.mst.zip",
-                DomesticStockMarketType.KOSDAQ,  "https://new.real.download.dws.co.kr/common/master/kosdaq_code.mst.zip",
-                DomesticStockMarketType.NXT_KOSPI, "https://new.real.download.dws.co.kr/common/master/nxt_kospi_code.mst.zip",
-                DomesticStockMarketType.NXT_KOSDAQ, "https://new.real.download.dws.co.kr/common/master/nxt_kosdaq_code.mst.zip"
+                DomesticStockMarketType.KOSDAQ,  "https://new.real.download.dws.co.kr/common/master/kosdaq_code.mst.zip"
         );
 
 

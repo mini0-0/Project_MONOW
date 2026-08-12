@@ -3,6 +3,7 @@ package com.monow.api.external.kis.application;
 import com.monow.api.external.kis.client.KisDailyPriceClient;
 import com.monow.api.external.kis.dto.response.KisDailyPriceResponse;
 import com.monow.api.external.kis.mapper.KisDailyPriceMapper;
+import com.monow.domain.stock.entity.DomesticStockMarketType;
 import com.monow.domain.stock.entity.Stock;
 import com.monow.domain.stock.entity.StockPriceDaily;
 import com.monow.domain.stock.repository.StockPriceDailyRepository;
@@ -64,7 +65,7 @@ public class StockPriceSyncServiceTest {
                     stockCode,
                     "삼성전자보통주",
                     "삼성전자",
-                    "주식",
+                    DomesticStockMarketType.KOSPI,
                     "300",
                     "101010",
                     "주권",

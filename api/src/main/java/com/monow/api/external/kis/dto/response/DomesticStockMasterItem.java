@@ -1,6 +1,6 @@
 package com.monow.api.external.kis.dto.response;
 
-import com.monow.api.external.kis.stockmaster.DomesticStockMarketType;
+import com.monow.domain.stock.entity.DomesticStockMarketType;
 
 public record DomesticStockMasterItem(
         String stockCode,

@@ -1,5 +1,6 @@
 package com.monow.api.external.kis.stockmaster;
 
+import com.monow.domain.stock.entity.DomesticStockMarketType;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
