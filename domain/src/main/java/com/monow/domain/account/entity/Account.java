@@ -51,17 +51,8 @@ public class Account extends BaseTimeEntity {
         return new Account(user, accountNumber, seedMoney);
     }
 
-    private static void validateSeedMoney(BigDecimal seedMoney) {
-        if (seedMoney == null || seedMoney.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("초기 지급 금액은 0보다 커야 합니다.");
-        }
-    }
-
-
     public void deductBalance(BigDecimal amount) {
-        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new BusinessException(ErrorCode.INVALID_DEDUCTION_AMOUNT);
-        }
+        validateAmount(amount);
 
         if (balance.compareTo(amount) < 0) {
             throw new BusinessException(ErrorCode.INSUFFICIENT_BALANCE);
@@ -72,15 +63,23 @@ public class Account extends BaseTimeEntity {
     }
 
     public void addBalance(BigDecimal amount) {
+        validateAmount(amount);
+
+        balance = balance.add(amount);
+
+    }
+
+    private static void validateSeedMoney(BigDecimal seedMoney) {
+        if (seedMoney == null || seedMoney.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("초기 지급 금액은 0보다 커야 합니다.");
+        }
+    }
+
+
+    private void validateAmount(BigDecimal amount) {
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new BusinessException(ErrorCode.INVALID_DEDUCTION_AMOUNT);
         }
-
-        if (balance.compareTo(amount) < 0) {
-            throw new BusinessException(ErrorCode.INSUFFICIENT_BALANCE);
-        }
-
-        balance = balance.add(amount);
 
     }
 }
