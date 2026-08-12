@@ -27,16 +27,8 @@ public class StockTradingController {
                     stockTradingService.buyStock(request.userId(), request.stockCode(), request.marketType(), request.quantity());
 
 
-            case SELL -> {
-                log.warn(
-                        "주식 매도 미구현. userId={}, stockCode={}, quantity={}",
-                        request.userId(),
-                        request.stockCode(),
-                        request.quantity()
-                );
-
-                throw new UnsupportedOperationException("매도 기능은 아직 지원하지 않습니다.");
-            }
+            case SELL ->
+                    stockTradingService.sellStock(request.userId(), request.stockCode(), request.marketType(), request.quantity());
         }
 
         return ApiResponse.success();

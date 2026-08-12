@@ -14,8 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -82,6 +81,34 @@ class StockTradingControllerTest {
             verifyNoInteractions(stockTradingService);
         }
 
+    }
+
+    @Nested
+    @DisplayName("주식 매도")
+    class SellStock {
+        @Test
+        @DisplayName("[성공] - 정상적인 주식 매도 요청 시 서비스 호출")
+        void sellStock_whenRequestIsValid_callsService() throws Exception {
+            // Given
+            Long userId = 2L;
+            String stockCode = "005930";
+            CurrentPriceMarketType marketType = CurrentPriceMarketType.KRX;
+            OrderType orderType = OrderType.SELL;
+            int quantity = 5;
+
+            StockOrderRequest request = new StockOrderRequest(userId, stockCode, marketType, orderType, quantity);
+
+            // When & Then
+            mockMvc.perform(post("/api/v1/orders")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success").value(true));
+
+            verify(stockTradingService).sellStock(userId, stockCode, marketType, quantity);
+
+
+        }
     }
 
 }
