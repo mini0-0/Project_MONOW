@@ -86,13 +86,8 @@ public class Holding extends BaseTimeEntity {
     }
 
     public void buy(int purchaseQuantity, BigDecimal purchasePrice) {
-        if (purchaseQuantity <= 0) {
-            throw new BusinessException(ErrorCode.INVALID_ORDER_QUANTITY);
-        }
-
-        if (purchasePrice == null || purchasePrice.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new BusinessException(ErrorCode.INVALID_PURCHASE_PRICE);
-        }
+        validateQuantity(purchaseQuantity);
+        validatePurchasePrice(purchasePrice);
 
         // 이번 추가 매수의 총 매입금액
         BigDecimal additionalPurchaseAmount  = purchasePrice.multiply(BigDecimal.valueOf(purchaseQuantity));
@@ -109,12 +104,17 @@ public class Holding extends BaseTimeEntity {
     }
 
     public void sell(int sellQuantity) {
-        if (sellQuantity <= 0) {
-            throw new BusinessException(ErrorCode.INVALID_ORDER_QUANTITY);
-        }
+        validateQuantity(sellQuantity);
 
         if (quantity < sellQuantity) {
             throw new BusinessException(ErrorCode.INVALID_ORDER_QUANTITY);
+        }
+
+        // 전량 매도
+        if (quantity == sellQuantity) {
+            this.quantity = 0;
+            this.totalPurchaseAmount = BigDecimal.ZERO;
+            return;
         }
 
         // 매도 전 평균 매입가 계산
@@ -133,6 +133,21 @@ public class Holding extends BaseTimeEntity {
         this.totalPurchaseAmount = newTotalPurchaseAmount;
 
 
+    }
+
+    // 매수 및 매도 수량 공통 검증
+    private void validateQuantity(int quantity) {
+        if (quantity <= 0) {
+            throw new BusinessException(ErrorCode.INVALID_ORDER_QUANTITY);
+        }
+
+    }
+
+    // 매수 가격 검증
+    private void validatePurchasePrice(BigDecimal purchasePrice) {
+        if (purchasePrice == null || purchasePrice.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BusinessException(ErrorCode.INVALID_PURCHASE_PRICE);
+        }
     }
 
 }

@@ -47,26 +47,14 @@ public class StockTradingService {
             CurrentPriceMarketType marketType,
             int quantity
     ) {
-        if (quantity <= 0) {
-            throw new BusinessException(ErrorCode.INVALID_ORDER_QUANTITY);
-        }
+        validateQuantity(quantity);
 
-        Account account = accountRepository.findByUserId(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.ACCOUNT_NOT_FOUND));
-
+        Account account = getAccount(userId);
         User user = account.getUser();
+        Stock stock = getStock(stockCode);
 
-        Stock stock = stockRepository.findByStockCode(stockCode)
-                .orElseThrow(() -> new BusinessException(ErrorCode.STOCK_NOT_FOUND));
+        BigDecimal executionPrice = getExecutionPrice(marketType, stockCode);
 
-
-        RealtimeStockPriceResponse response = stockRealtimePriceCacheService.findLatestPrice(marketType, stockCode);
-
-        BigDecimal executionPrice = response.currentPrice();
-
-        if (executionPrice == null || executionPrice.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new BusinessException(ErrorCode.REALTIME_PRICE_INVALID_RESPONSE);
-        }
 
         BigDecimal totalAmount = executionPrice.multiply(BigDecimal.valueOf(quantity));
         BigDecimal beforeBalance = account.getBalance();
@@ -103,26 +91,13 @@ public class StockTradingService {
             CurrentPriceMarketType marketType,
             int quantity
     ) {
+        validateQuantity(quantity);
 
-        if (quantity <= 0) {
-            throw new BusinessException(ErrorCode.INVALID_ORDER_QUANTITY);
-        }
-
-        Account account = accountRepository.findByUserId(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.ACCOUNT_NOT_FOUND));
-
+        Account account = getAccount(userId);
         User user = account.getUser();
+        Stock stock = getStock(stockCode);
 
-        Stock stock = stockRepository.findByStockCode(stockCode)
-                .orElseThrow(() -> new BusinessException(ErrorCode.STOCK_NOT_FOUND));
-
-        RealtimeStockPriceResponse response = stockRealtimePriceCacheService.findLatestPrice(marketType, stockCode);
-
-        BigDecimal executionPrice = response.currentPrice();
-
-        if (executionPrice == null || executionPrice.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new BusinessException(ErrorCode.REALTIME_PRICE_INVALID_RESPONSE);
-        }
+        BigDecimal executionPrice = getExecutionPrice(marketType, stockCode);
 
         Holding holding = holdingRepository.findByAccountAndStock(account, stock)
                 .orElseThrow(() -> new BusinessException(ErrorCode.HOLDING_NOT_FOUND));
@@ -145,5 +120,44 @@ public class StockTradingService {
         TransactionHistory transactionHistory = TransactionHistory.createSellHistory(user, account, order, totalAmount, beforeBalance, afterBalance, description);
         transactionHistoryRepository.save(transactionHistory);
     }
+
+    // 주문 수량 검증
+    private void validateQuantity(int quantity) {
+        if (quantity <= 0) {
+            throw new BusinessException(ErrorCode.INVALID_ORDER_QUANTITY);
+        }
+    }
+
+    // 사용자 계좌 조회
+    private Account getAccount(Long userId) {
+        return accountRepository.findByUserId(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ACCOUNT_NOT_FOUND));
+
+    }
+
+    // 종목 조회
+    private Stock getStock(String stockCode) {
+        return stockRepository.findByStockCode(stockCode)
+                .orElseThrow(() -> new BusinessException(ErrorCode.STOCK_NOT_FOUND));
+
+    }
+
+    // 실시간 현재가 조회 및 검증
+    private BigDecimal getExecutionPrice(
+            CurrentPriceMarketType marketType,
+            String stockCode
+    ) {
+        RealtimeStockPriceResponse response = stockRealtimePriceCacheService.findLatestPrice(marketType, stockCode);
+
+        BigDecimal executionPrice = response.currentPrice();
+
+        if (executionPrice == null || executionPrice.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BusinessException(ErrorCode.REALTIME_PRICE_INVALID_RESPONSE);
+        }
+
+        return executionPrice;
+    }
+
+
 
 }
