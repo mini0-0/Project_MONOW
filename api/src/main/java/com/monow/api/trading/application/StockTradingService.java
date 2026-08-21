@@ -8,6 +8,7 @@ import com.monow.domain.account.repository.AccountRepository;
 import com.monow.domain.holding.entity.Holding;
 import com.monow.domain.holding.repository.HoldingRepository;
 import com.monow.domain.order.entity.Order;
+import com.monow.domain.order.entity.OrderMarketType;
 import com.monow.domain.order.repository.OrderRepository;
 import com.monow.domain.stock.entity.Stock;
 import com.monow.domain.stock.repository.StockRepository;
@@ -55,6 +56,7 @@ public class StockTradingService {
 
         BigDecimal executionPrice = getExecutionPrice(marketType, stockCode);
 
+        OrderMarketType orderMarketType = convertOrderMarketType(marketType);
 
         BigDecimal totalAmount = executionPrice.multiply(BigDecimal.valueOf(quantity));
         BigDecimal beforeBalance = account.getBalance();
@@ -75,7 +77,7 @@ public class StockTradingService {
 
         LocalDateTime now = LocalDateTime.now();
 
-        Order order = Order.createBuyOrder(user, account, stock, quantity, executionPrice, totalAmount, now, now);
+        Order order = Order.createBuyOrder(user, account, stock, orderMarketType, quantity, executionPrice, totalAmount, now, now);
         orderRepository.save(order);
 
         String description = stock.getStockName() + " " + quantity + "주 매수";
@@ -99,6 +101,8 @@ public class StockTradingService {
 
         BigDecimal executionPrice = getExecutionPrice(marketType, stockCode);
 
+        OrderMarketType orderMarketType = convertOrderMarketType(marketType);
+
         Holding holding = holdingRepository.findByAccountAndStock(account, stock)
                 .orElseThrow(() -> new BusinessException(ErrorCode.HOLDING_NOT_FOUND));
 
@@ -112,7 +116,7 @@ public class StockTradingService {
 
         LocalDateTime now = LocalDateTime.now();
 
-        Order order = Order.createSellOrder(user, account, stock, quantity, executionPrice, totalAmount, now, now);
+        Order order = Order.createSellOrder(user, account, stock, orderMarketType, quantity, executionPrice, totalAmount, now, now);
         orderRepository.save(order);
 
         String description = stock.getStockName() + " " + quantity + "주 매도";
@@ -158,6 +162,14 @@ public class StockTradingService {
         return executionPrice;
     }
 
-
+    private OrderMarketType convertOrderMarketType(
+            CurrentPriceMarketType marketType
+    ) {
+        return switch (marketType) {
+            case KRX -> OrderMarketType.KRX;
+            case NXT -> OrderMarketType.NXT;
+            case INTEGRATED -> OrderMarketType.INTEGRATED;
+        };
+    }
 
 }

@@ -42,6 +42,10 @@ public class Order extends BaseTimeEntity {
     @Column(name = "order_status", nullable = false, length = 50)
     private OrderStatus orderStatus;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "order_market_type", nullable = false, length = 20)
+    private OrderMarketType orderMarketType;
+
     @Column(nullable = false)
     private Integer quantity;
 
@@ -69,6 +73,7 @@ public class Order extends BaseTimeEntity {
             Stock stock,
             OrderType orderType,
             OrderStatus orderStatus,
+            OrderMarketType orderMarketType,
             Integer quantity,
             BigDecimal orderPrice,
             BigDecimal totalAmount,
@@ -80,6 +85,7 @@ public class Order extends BaseTimeEntity {
         this.stock = stock;
         this.orderType = orderType;
         this.orderStatus = orderStatus;
+        this.orderMarketType = orderMarketType;
         this.quantity = quantity;
         this.orderPrice = orderPrice;
         this.totalAmount = totalAmount;
@@ -91,6 +97,7 @@ public class Order extends BaseTimeEntity {
             User user,
             Account account,
             Stock stock,
+            OrderMarketType orderMarketType,
             Integer quantity,
             BigDecimal orderPrice,
             BigDecimal totalAmount,
@@ -103,6 +110,7 @@ public class Order extends BaseTimeEntity {
                 stock,
                 OrderType.BUY,
                 OrderStatus.EXECUTED,
+                orderMarketType,
                 quantity,
                 orderPrice,
                 totalAmount,
@@ -115,6 +123,7 @@ public class Order extends BaseTimeEntity {
             User user,
             Account account,
             Stock stock,
+            OrderMarketType orderMarketType,
             Integer quantity,
             BigDecimal orderPrice,
             BigDecimal totalAmount,
@@ -127,6 +136,7 @@ public class Order extends BaseTimeEntity {
                 stock,
                 OrderType.SELL,
                 OrderStatus.EXECUTED,
+                orderMarketType,
                 quantity,
                 orderPrice,
                 totalAmount,
