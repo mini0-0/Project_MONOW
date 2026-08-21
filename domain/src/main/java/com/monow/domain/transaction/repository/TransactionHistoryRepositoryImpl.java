@@ -8,6 +8,8 @@ import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
@@ -62,6 +64,43 @@ public class TransactionHistoryRepositoryImpl implements TransactionHistoryRepos
                 pageable,
                 countQuery::fetchOne
         );
+
+    }
+
+    @Override
+    public Optional<TransactionHistoryDetailQueryResult> findByTransactionHistoryId(Long userId, Long transactionHistoryId) {
+
+        QTransactionHistory transactionHistory = QTransactionHistory.transactionHistory;
+
+        QOrder order = QOrder.order;
+
+        QStock stock = QStock.stock;
+
+        TransactionHistoryDetailQueryResult result = queryFactory
+                .select(
+                        Projections.constructor(
+                                TransactionHistoryDetailQueryResult.class,
+                                transactionHistory.id,
+                                stock.stockCode,
+                                stock.stockName,
+                                stock.marketType,
+                                order.orderMarketType,
+                                transactionHistory.transactionHistoryType,
+                                order.quantity, order.orderPrice,
+                                transactionHistory.amount,
+                                transactionHistory.beforeBalance,
+                                transactionHistory.afterBalance,
+                                transactionHistory.description,
+                                transactionHistory.createdAt
+                        )
+                )
+                .from(transactionHistory)
+                .join(transactionHistory.order, order)
+                .join(order.stock, stock)
+                .where(transactionHistory.user.id.eq(userId), transactionHistory.id.eq(transactionHistoryId))
+                .fetchOne();
+
+        return Optional.ofNullable(result);
 
     }
 
