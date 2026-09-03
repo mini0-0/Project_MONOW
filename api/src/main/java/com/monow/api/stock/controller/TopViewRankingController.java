@@ -1,6 +1,6 @@
 package com.monow.api.stock.controller;
 
-import com.monow.api.stock.application.TopViewRankingService;
+import com.monow.api.stock.application.ranking.TopViewRankingService;
 import com.monow.api.stock.dto.response.TopViewRankingResponse;
 import com.monow.global.response.ApiResponse;
 import lombok.RequiredArgsConstructor;

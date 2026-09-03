@@ -70,7 +70,9 @@ public class StockPriceSyncServiceTest {
                     "101010",
                     "주권",
                     "1010",
-                    "주식"
+                    "주식",
+                    true,
+                    true
             );
 
 

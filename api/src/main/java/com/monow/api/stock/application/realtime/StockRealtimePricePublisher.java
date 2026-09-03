@@ -1,8 +1,7 @@
-package com.monow.api.stock.application;
+package com.monow.api.stock.application.realtime;
 
 import com.monow.api.external.kis.type.CurrentPriceMarketType;
-import com.monow.api.stock.dto.response.RealtimeStockPriceResponse;
-import com.monow.api.stock.dto.response.StockCurrentPriceResponse;
+import com.monow.api.stock.dto.response.StockRealtimePriceResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -20,7 +19,7 @@ public class StockRealtimePricePublisher {
     public void publishCurrentPrice(
             CurrentPriceMarketType marketType,
             String stockCode,
-            RealtimeStockPriceResponse response
+            StockRealtimePriceResponse response
     ) {
         String topic = STOCK_TOPIC_PREFIX
                  + marketType.name()

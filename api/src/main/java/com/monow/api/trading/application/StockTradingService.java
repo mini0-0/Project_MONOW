@@ -1,8 +1,8 @@
 package com.monow.api.trading.application;
 
 import com.monow.api.external.kis.type.CurrentPriceMarketType;
-import com.monow.api.stock.application.StockRealtimePriceCacheService;
-import com.monow.api.stock.dto.response.RealtimeStockPriceResponse;
+import com.monow.api.stock.application.realtime.StockRealtimePriceCacheService;
+import com.monow.api.stock.dto.response.StockRealtimePriceResponse;
 import com.monow.domain.account.entity.Account;
 import com.monow.domain.account.repository.AccountRepository;
 import com.monow.domain.holding.entity.Holding;
@@ -151,7 +151,7 @@ public class StockTradingService {
             CurrentPriceMarketType marketType,
             String stockCode
     ) {
-        RealtimeStockPriceResponse response = stockRealtimePriceCacheService.findLatestPrice(marketType, stockCode);
+        StockRealtimePriceResponse response = stockRealtimePriceCacheService.findLatestPrice(marketType, stockCode);
 
         BigDecimal executionPrice = response.currentPrice();
 

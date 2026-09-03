@@ -1,8 +1,8 @@
 package com.monow.api.stock.controller;
 
 import com.monow.api.external.kis.type.CurrentPriceMarketType;
-import com.monow.api.stock.application.StockCurrentPriceQueryService;
-import com.monow.api.stock.application.StockRealtimePriceConnectionService;
+import com.monow.api.stock.application.currentprice.StockCurrentPriceQueryService;
+import com.monow.api.stock.application.realtime.StockRealtimePriceConnectionService;
 import com.monow.api.stock.dto.response.StockCurrentPriceResponse;
 import com.monow.api.stock.dto.response.StockDetailResponse;
 import com.monow.global.response.ApiResponse;
@@ -28,13 +28,11 @@ public class StockCurrentPriceController {
      *
      * ex) GET /api/v1/stocks/005930/current-price/KRX
      */
-    @GetMapping("/{stockCode}/current-price/{marketType}")
+    @GetMapping("/{stockCode}/current-price")
     public ApiResponse<StockCurrentPriceResponse> getCurrentPrice(
-            @PathVariable(value = "stockCode") String stockCode,
-            @PathVariable(value = "marketType") CurrentPriceMarketType marketType
+            @PathVariable(value = "stockCode") String stockCode
     ) {
-        StockCurrentPriceResponse response =
-                stockCurrentPriceQueryService.getCurrentPrice(marketType, stockCode);
+        StockCurrentPriceResponse response = stockCurrentPriceQueryService.getCurrentPrice(stockCode);
 
         return ApiResponse.success(response);
     }
@@ -50,15 +48,23 @@ public class StockCurrentPriceController {
      */
     @GetMapping("/{stockCode}/detail")
     public ApiResponse<StockDetailResponse> getStockDetail(
-            @PathVariable(value = "stockCode") String stockCode,
-            @RequestParam(value = "marketType") CurrentPriceMarketType marketType
+            @PathVariable(value = "stockCode") String stockCode
     ) {
-        StockCurrentPriceResponse currentPrice =
-                stockCurrentPriceQueryService.getCurrentPrice(marketType, stockCode);
+        StockCurrentPriceResponse currentPrice = stockCurrentPriceQueryService.getCurrentPrice(stockCode);
 
-        stockRealtimePriceConnectionService.subscribe(marketType, stockCode);
+        CurrentPriceMarketType marketType = currentPrice.marketType();
 
-        String realtimeTopic = createRealtimeTopic(marketType, stockCode);
+        if (currentPrice.realtime()) {
+            stockRealtimePriceConnectionService.subscribe(
+                    marketType,
+                    stockCode
+            );
+        }
+
+        String realtimeTopic = createRealtimeTopic(
+                        marketType,
+                        stockCode
+                );
 
         StockDetailResponse response = StockDetailResponse.from(
                 currentPrice,

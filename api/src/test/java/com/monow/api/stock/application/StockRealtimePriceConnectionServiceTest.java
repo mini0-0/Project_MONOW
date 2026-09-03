@@ -3,6 +3,7 @@ package com.monow.api.stock.application;
 import com.monow.api.external.kis.client.KisRealtimePriceWebSocketClient;
 import com.monow.api.external.kis.event.KisWebSocketConnectionEvent;
 import com.monow.api.external.kis.type.CurrentPriceMarketType;
+import com.monow.api.stock.application.realtime.StockRealtimePriceConnectionService;
 import com.monow.global.error.exception.BusinessException;
 import com.monow.global.error.model.ErrorCode;
 import org.junit.jupiter.api.DisplayName;
@@ -124,8 +125,13 @@ class StockRealtimePriceConnectionServiceTest {
                 KisWebSocketConnectionEvent.ConnectionStatus.DISCONNECTED
         );
 
+        KisWebSocketConnectionEvent connectionEvent = new KisWebSocketConnectionEvent(
+                KisWebSocketConnectionEvent.ConnectionStatus.CONNECTED
+        );
+
         // When
         stockRealtimePriceConnectionService.handleConnectionEvent(disconnectedEvent);
+        stockRealtimePriceConnectionService.handleConnectionEvent(connectionEvent);
 
         // Then
         verify(kisRealtimePriceWebSocketClient, times(2)).subscribe(marketType, stockCode);

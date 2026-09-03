@@ -1,9 +1,11 @@
-package com.monow.api.stock.application;
+package com.monow.api.stock.application.realtime;
 
 import com.monow.api.external.kis.client.KisRealtimePriceWebSocketClient;
 import com.monow.api.external.kis.event.KisRealtimeSubscriptionEvent;
 import com.monow.api.external.kis.event.KisWebSocketConnectionEvent;
 import com.monow.api.external.kis.type.CurrentPriceMarketType;
+import com.monow.api.stock.application.currentprice.StockCurrentPriceMarketSelection;
+import com.monow.api.stock.application.currentprice.StockCurrentPriceMarketSelector;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -22,6 +24,8 @@ public class StockRealtimePriceConnectionService {
     private static final long RECONNECT_DELAY_SECONDS = 3L;
 
     private final KisRealtimePriceWebSocketClient kisRealtimePriceWebSocketClient;
+
+    private final StockCurrentPriceMarketSelector stockCurrentPriceMarketSelector;
 
     private final AtomicReference<ConnectionStatus> connectionStatus = new AtomicReference<>(ConnectionStatus.DISCONNECTED);
 
@@ -57,6 +61,25 @@ public class StockRealtimePriceConnectionService {
         }
 
     }
+
+    /**
+     * 현재 시간 기준으로 시장을 자동 선택하여 특정 종목 실시간 가격 수신 준비
+     */
+    public void subscribeCurrentMarket(String stockCode) {
+        StockCurrentPriceMarketSelection selection = stockCurrentPriceMarketSelector.select();
+
+        if (!selection.realtime()) {
+            log.debug(
+                    "실시간 가격 수신 등록 생략 - marketStatus={}, stockCode={}",
+                    selection.marketStatus(),
+                    stockCode
+            );
+            return;
+        }
+
+        subscribe(selection.marketType(), stockCode);
+    }
+
 
     /**
      * 특정 종목의 실시간 가격 수신 준비

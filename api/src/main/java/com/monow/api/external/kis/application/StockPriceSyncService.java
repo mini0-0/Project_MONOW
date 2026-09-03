@@ -46,8 +46,7 @@ public class StockPriceSyncService {
 
         String accessToken = kisAccessTokenProvider.getAccessToken();
 
-        KisDailyPriceResponse response =
-                kisDailyPriceClient.fetchDailyPrice(accessToken, stockCode);
+        KisDailyPriceResponse response = kisDailyPriceClient.fetchDailyPrice(accessToken, stockCode);
 
         if (response == null || response.output() == null) {
             throw new BusinessException(ErrorCode.STOCK_DAILY_PRICE_FETCH_FAILED);

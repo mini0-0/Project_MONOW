@@ -5,10 +5,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.monow.api.external.kis.config.KisProperties;
 import com.monow.api.external.kis.dto.request.KisRealtimePriceRequest;
 import com.monow.api.external.kis.event.KisRealtimeSubscriptionEvent;
+import com.monow.api.external.kis.mapper.KisRealtimePriceParser;
 import com.monow.api.external.kis.type.CurrentPriceMarketType;
-import com.monow.api.stock.application.StockRealtimePriceHandler;
+import com.monow.api.stock.application.realtime.StockRealtimePriceHandler;
 import com.monow.api.external.kis.event.KisWebSocketConnectionEvent;
-import com.monow.api.stock.dto.response.RealtimeStockPriceResponse;
+import com.monow.api.stock.dto.response.StockRealtimePriceResponse;
 import com.monow.global.error.exception.BusinessException;
 import com.monow.global.error.model.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -23,19 +24,11 @@ import org.springframework.web.socket.client.standard.StandardWebSocketClient;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.time.Clock;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-
-import java.time.format.DateTimeFormatter;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class KisRealtimePriceWebSocketClient {
-
-    private static final String REALTIME_PRICE_TR_ID = "H0STCNT0";
 
     private static final String PINGPONG_TR_ID = "PINGPONG";
 
@@ -45,30 +38,19 @@ public class KisRealtimePriceWebSocketClient {
 
     private static final String CONTENT_TYPE_UTF8 = "utf-8";
 
-    private static final String REALTIME_DATA_TYPE = "0";
-
     private static final String SUCCESS_CODE = "0";
-
-    private static final int MINIMUM_FIELD_COUNT = 15;
-
-    private static final DateTimeFormatter KIS_TRADE_TIME_FORMATTER =
-            DateTimeFormatter.ofPattern("HHmmss");
-
-    private static final DateTimeFormatter RESPONSE_TRADE_TIME_FORMATTER =
-            DateTimeFormatter.ofPattern("HH:mm:ss");
-
 
     private final KisProperties kisProperties;
 
     private final KisWebSocketApprovalKeyClient kisWebSocketApprovalKeyClient;
+
+    private final KisRealtimePriceParser kisRealtimePriceParser;
 
     private final StockRealtimePriceHandler stockRealtimePriceHandler;
 
     private final ApplicationEventPublisher applicationEventPublisher;
 
     private final ObjectMapper objectMapper;
-
-    private final Clock clock;
     private WebSocketSession session;
 
     private String approvalKey;
@@ -218,7 +200,24 @@ public class KisRealtimePriceWebSocketClient {
             return;
         }
 
-        handleKisRealtimePriceData(rawData);
+        StockRealtimePriceResponse response = kisRealtimePriceParser.parse(rawData);
+
+        if (response == null) {
+            return;
+        }
+
+        stockRealtimePriceHandler.handleRealtimePrice(
+                response.marketType(),
+                response.stockCode(),
+                response
+        );
+
+        log.info(
+                "KIS 실시간 현재가 처리 완료 - stockCode={}, currentPrice={}, tradeTime={}",
+                response.stockCode(),
+                response.currentPrice(),
+                response.tradeTime()
+        );
 
     }
 
@@ -245,24 +244,26 @@ public class KisRealtimePriceWebSocketClient {
             return;
         }
 
-        if(!REALTIME_PRICE_TR_ID.equals(trId)) {
+        if(!CurrentPriceMarketType.supportsRealtimeTrId(trId)) {
             log.debug("처리 대상이 아닌 KIS WebSocket JSON 메시지 - trId={}", trId);
             return;
         }
 
-        handleSubscriptionResponse(rootNode);
+        handleSubscriptionResponse(rootNode, trId);
 
     }
 
     /**
      * KIS 실시간 가격 수신 등록 성공·실패 응답 처리
      */
-    private void handleSubscriptionResponse(JsonNode rootNode) {
+    private void handleSubscriptionResponse(JsonNode rootNode, String trId) {
         String stockCode = rootNode.path("header").path("tr_key").asText();
         String resultCode = rootNode.path("body").path("rt_cd").asText();
         String messageCode = rootNode.path("body").path("msg_cd").asText();
         String message = rootNode.path("body").path("msg1").asText();
         boolean success = SUCCESS_CODE.equals(resultCode);
+
+        CurrentPriceMarketType marketType = CurrentPriceMarketType.fromRealtimeTrId(trId);
 
         if (success) {
             log.info(
@@ -283,13 +284,23 @@ public class KisRealtimePriceWebSocketClient {
 
         applicationEventPublisher.publishEvent(
                 new KisRealtimeSubscriptionEvent(
-                        CurrentPriceMarketType.KRX,
+                        marketType,
                         stockCode,
                         success,
                         message
                 )
         );
     }
+
+    /**
+     * 시장 구분과 종목 코드로 KIS 실시간 현재가 요청 DTO를 생성
+     */
+    public KisRealtimePriceRequest createRealtimePriceRequest(CurrentPriceMarketType marketType, String stockCode) {
+        String marketCode = marketType.getKisCode();
+
+        return new KisRealtimePriceRequest(marketCode, stockCode);
+    }
+
 
     /**
      * KIS WebSocket에 전송할 실시간 현재가 구독 요청 JSON 문자열 생성
@@ -302,6 +313,9 @@ public class KisRealtimePriceWebSocketClient {
         if (request == null || request.stockCode() == null || request.stockCode().isBlank()) {
             throw new BusinessException(ErrorCode.KIS_WEBSOCKET_INVALID_SUBSCRIBE_REQUEST);
         }
+
+        CurrentPriceMarketType marketType = CurrentPriceMarketType.fromKisCode(request.marketCode());
+        String realtimeTrId = marketType.getRealtimeTrId();
 
         return """
                 {
@@ -323,143 +337,11 @@ public class KisRealtimePriceWebSocketClient {
                 CUSTOMER_TYPE_PERSONAL,
                 SUBSCRIBE_TR_TYPE,
                 CONTENT_TYPE_UTF8,
-                REALTIME_PRICE_TR_ID,
+                realtimeTrId,
                 request.stockCode()
         );
     }
 
-    /**
-     * KIS에서 수신한 실시간 현재가 데이터를 파싱하고 내부 처리 Service로 전달
-     */
-    public void handleKisRealtimePriceData(String rawData) {
-        if (rawData == null || rawData.isBlank()) {
-            throw invalidRealtimeDataException();
-        }
-
-        String[] messageParts =
-                rawData.split("\\|", 4);
-
-        if (messageParts.length != 4) {
-            throw invalidRealtimeDataException();
-        }
-
-        String encryptionFlag = messageParts[0];
-
-        String trId = messageParts[1];
-
-        String dataCountValue = messageParts[2];
-
-        String body = messageParts[3];
-
-        /*
-         * 현재는 암호화되지 않은 데이터만 처리
-         */
-        if (!REALTIME_DATA_TYPE.equals(encryptionFlag)) {
-            log.debug("암호화된 KIS WebSocket 데이터 처리 생략 - encryptionFlag={}", encryptionFlag);
-            return;
-        }
-
-        /*
-         * 국내주식 실시간 체결 데이터만 처리
-         */
-        if (!REALTIME_PRICE_TR_ID.equals(trId)) {
-            log.debug("처리 대상이 아닌 KIS WebSocket 데이터 - trId={}", trId);
-            return;
-        }
-
-        int dataCount;
-
-        try {
-            dataCount = Integer.parseInt(dataCountValue);
-        } catch (NumberFormatException exception) {
-            throw invalidRealtimeDataException();
-        }
-
-        /*
-         * 현재 구현은 한 메시지에 체결 데이터 1건 처리
-         */
-        if (dataCount != 1) {
-            log.warn("현재는 실시간 체결 데이터 1건만 처리합니다. dataCount={}", dataCount);
-
-            return;
-        }
-
-        String[] fields = body.split("\\^", -1);
-
-        if (fields.length < MINIMUM_FIELD_COUNT) {
-            throw invalidRealtimeDataException();
-        }
-
-        RealtimeStockPriceResponse response = convertToRealtimeResponse(fields);
-
-        /*
-         * 실시간 현재가를 Redis에 저장하고 프론트 WebSocket topic으로 전달
-         */
-        stockRealtimePriceHandler.handleRealtimePrice(
-                response.marketType(),
-                response.stockCode(),
-                response
-        );
-
-        log.info(
-                "KIS 실시간 현재가 처리 완료 - stockCode={}, currentPrice={}, tradeTime={}",
-                response.stockCode(),
-                response.currentPrice(),
-                response.tradeTime()
-        );
-    }
-    private RealtimeStockPriceResponse convertToRealtimeResponse(String[] fields) {
-        try {
-            return new RealtimeStockPriceResponse(
-                    CurrentPriceMarketType.KRX,
-                    fields[0],
-                    new BigDecimal(fields[2]),
-                    new BigDecimal(fields[4]),
-                    fields[3],
-                    new BigDecimal(fields[5]),
-                    Long.parseLong(fields[13]),
-                    new BigDecimal(fields[14]),
-                    new BigDecimal(fields[7]),
-                    new BigDecimal(fields[8]),
-                    new BigDecimal(fields[9]),
-                    parseTradeTime(fields[1]),
-                    LocalDateTime.now(clock)
-            );
-        } catch (NumberFormatException exception) {
-            throw invalidRealtimeDataException();
-        }
-    }
-
-    private LocalTime parseTradeTime(String rawTradeTime) {
-        if (rawTradeTime == null || rawTradeTime.isBlank()) {
-            throw invalidRealtimeDataException();
-        }
-
-        try {
-            return LocalTime.parse(
-                    rawTradeTime,
-                    KIS_TRADE_TIME_FORMATTER
-            );
-        } catch (Exception exception) {
-            throw invalidRealtimeDataException();
-        }
-    }
-
-    /**
-     * HHmmss를 HH:mm:ss로 변경
-     */
-    private String formatTradeTime(String rawTradeTime) {
-        if (rawTradeTime == null || rawTradeTime.isBlank()) {
-            throw invalidRealtimeDataException();
-        }
-
-        try {
-            return LocalTime.parse(rawTradeTime, KIS_TRADE_TIME_FORMATTER)
-                    .format(RESPONSE_TRADE_TIME_FORMATTER);
-        } catch (Exception exception) {
-            throw invalidRealtimeDataException();
-        }
-    }
 
     private IllegalArgumentException invalidRealtimeDataException() {
         return new IllegalArgumentException(
@@ -467,12 +349,5 @@ public class KisRealtimePriceWebSocketClient {
         );
     }
 
-    /**
-     * 시장 구분과 종목 코드로 KIS 실시간 현재가 요청 DTO를 생성
-     */
-    public KisRealtimePriceRequest createRealtimePriceRequest(CurrentPriceMarketType marketType, String stockCode) {
-        String marketCode = marketType.getKisCode();
 
-        return new KisRealtimePriceRequest(marketCode, stockCode);
-    }
 }

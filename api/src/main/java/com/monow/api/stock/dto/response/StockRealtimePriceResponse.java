@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
-public record RealtimeStockPriceResponse(
+public record StockRealtimePriceResponse(
         CurrentPriceMarketType marketType,
         String stockCode,
         BigDecimal currentPrice,

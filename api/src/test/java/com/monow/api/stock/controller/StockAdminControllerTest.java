@@ -1,8 +1,7 @@
 package com.monow.api.stock.controller;
 
 import com.monow.api.external.kis.application.DomesticStockSyncService;
-import com.monow.api.external.kis.application.StockInfoSyncService;
-import com.monow.domain.stock.entity.DomesticStockMarketType;
+import com.monow.api.external.kis.application.StockPriceSyncService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -26,21 +25,19 @@ class StockAdminControllerTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private StockInfoSyncService stockInfoSyncService;
-
-    @MockitoBean
     private DomesticStockSyncService domesticStockSyncService;
 
+    @MockitoBean
+    private StockPriceSyncService stockPriceSyncService;
 
     @Nested
     @DisplayName("관리자 종목 동기화 API")
     class SyncStocks {
 
         @Test
-        @DisplayName("[성공] - 여러 종목코드를 전달하면 각 종목 동기화를 요청")
-        void syncStocks_whenMultipleStockCodesProvided_callsSyncStockInfoEach() throws Exception {
+        @DisplayName("[성공] - 여러 종목코드를 전달하면 선택 종목 동기화를 요청")
+        void  givenMultipleStockCodes_whenSyncStocks_thenCallSelectedDomesticStockSync() throws Exception {
             // Given
-            DomesticStockMarketType marketType = DomesticStockMarketType.KOSPI;
             String requestBody = """
                     {
                       "stocks": [
@@ -67,9 +64,14 @@ class StockAdminControllerTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.success").value(true));
 
-            verify(stockInfoSyncService).syncStockInfo("005930", marketType);
-            verify(stockInfoSyncService).syncStockInfo("000660", marketType);
-            verify(stockInfoSyncService).syncStockInfo("035420", marketType);
+            verify(domesticStockSyncService)
+                    .syncSelectedDomesticStocks(
+                            List.of(
+                                    "005930",
+                                    "000660",
+                                    "035420"
+                            )
+                    );
 
 
         }

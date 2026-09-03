@@ -1,13 +1,13 @@
-package com.monow.api.stock.application;
+package com.monow.api.stock.application.currentprice;
 
 import com.monow.api.external.kis.application.KisAccessTokenProvider;
 import com.monow.api.external.kis.client.KisCurrentPriceClient;
 import com.monow.api.external.kis.dto.response.KisCurrentPriceResponse;
 import com.monow.api.external.kis.type.CurrentPriceMarketType;
+import com.monow.api.stock.application.StockMetadataCacheService;
+import com.monow.api.stock.application.realtime.StockRealtimePriceCacheService;
 import com.monow.api.stock.dto.StockMetadata;
 import com.monow.api.stock.dto.response.StockCurrentPriceResponse;
-import com.monow.domain.stock.entity.Stock;
-import com.monow.domain.stock.repository.StockRepository;
 import com.monow.global.error.exception.BusinessException;
 import com.monow.global.error.model.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +26,7 @@ public class StockCurrentPriceQueryService {
 
     private final StockMetadataCacheService stockMetadataCacheService;
 
-    private final StockRepository stockRepository;
+    private final StockCurrentPriceMarketSelector stockCurrentPriceMarketSelector;
 
     private final KisAccessTokenProvider kisAccessTokenProvider;
 
@@ -35,12 +35,11 @@ public class StockCurrentPriceQueryService {
     private final Clock clock;
 
     // 단건 현재가 조회
-    public StockCurrentPriceResponse getCurrentPrice(
-            CurrentPriceMarketType marketType,
-            String stockCode
-    ) {
-
+    public StockCurrentPriceResponse getCurrentPrice(String stockCode) {
         StockMetadata metadata = stockMetadataCacheService.getMetadata(stockCode);
+
+        StockCurrentPriceMarketSelection selection = stockCurrentPriceMarketSelector.select();
+        CurrentPriceMarketType marketType = selection.marketType();
 
         String accessToken =  kisAccessTokenProvider.getAccessToken();
 
@@ -71,6 +70,8 @@ public class StockCurrentPriceQueryService {
         try {
             return new StockCurrentPriceResponse(
                     marketType,
+                    selection.marketStatus(),
+                    selection.realtime(),
                     metadata.stockCode(),
                     metadata.stockName(),
 
