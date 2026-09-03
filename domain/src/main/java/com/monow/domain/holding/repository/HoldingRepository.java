@@ -6,8 +6,10 @@ import com.monow.domain.stock.entity.Stock;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
+import java.util.List;
 
-public interface HoldingRepository extends JpaRepository<Holding, Long> {
+public interface HoldingRepository extends JpaRepository<Holding, Long>, HoldingRepositoryCustom {
     Optional<Holding> findByAccountAndStock(Account account, Stock stock);
 
+    List<PortfolioHoldingQueryResult> findPortfolioHoldings(Long userId);
 }
