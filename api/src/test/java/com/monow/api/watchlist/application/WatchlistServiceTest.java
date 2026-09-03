@@ -3,7 +3,6 @@ package com.monow.api.watchlist.application;
 import com.monow.domain.stock.entity.DomesticStockMarketType;
 import com.monow.domain.stock.entity.Stock;
 import com.monow.domain.stock.repository.StockRepository;
-
 import com.monow.domain.user.entity.User;
 import com.monow.domain.user.repository.UserRepository;
 import com.monow.domain.watchlist.entity.Watchlist;
@@ -22,8 +21,8 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.BDDMockito.given;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -54,36 +53,20 @@ class WatchlistServiceTest {
             User user = createUser();
             Stock stock = createStock(stockCode);
 
-            given(userRepository.findById(userId))
-                    .willReturn(Optional.of(user));
-
-            given(stockRepository.findByStockCode(stockCode))
-                    .willReturn(Optional.of(stock));
-
-            given(watchlistRepository.existsByUserAndStock(user, stock))
-                    .willReturn(false);
+            given(userRepository.findById(userId)).willReturn(Optional.of(user));
+            given(stockRepository.findByStockCode(stockCode)).willReturn(Optional.of(stock));
+            given(watchlistRepository.existsByUserAndStock(user, stock)).willReturn(false);
 
             // When
-            boolean result = watchlistService.setWatchlistStatus(
-                    userId,
-                    stockCode,
-                    true
-            );
+            boolean result = watchlistService.setWatchlistStatus(userId, stockCode, true);
 
             // Then
             assertThat(result).isTrue();
 
-            verify(watchlistRepository)
-                    .existsByUserAndStock(user, stock);
-
-            verify(watchlistRepository, times(1))
-                    .save(any(Watchlist.class));
-
-            verify(watchlistRepository, never())
-                    .findByUserAndStock(any(User.class), any(Stock.class));
-
-            verify(watchlistRepository, never())
-                    .delete(any(Watchlist.class));
+            verify(watchlistRepository).existsByUserAndStock(user, stock);
+            verify(watchlistRepository).save(any(Watchlist.class));
+            verify(watchlistRepository, never()).findByUserAndStock(any(User.class), any(Stock.class));
+            verify(watchlistRepository, never()).delete(any(Watchlist.class));
         }
 
         @Test
@@ -95,36 +78,20 @@ class WatchlistServiceTest {
             User user = createUser();
             Stock stock = createStock(stockCode);
 
-            given(userRepository.findById(userId))
-                    .willReturn(Optional.of(user));
-
-            given(stockRepository.findByStockCode(stockCode))
-                    .willReturn(Optional.of(stock));
-
-            given(watchlistRepository.existsByUserAndStock(user, stock))
-                    .willReturn(true);
+            given(userRepository.findById(userId)).willReturn(Optional.of(user));
+            given(stockRepository.findByStockCode(stockCode)).willReturn(Optional.of(stock));
+            given(watchlistRepository.existsByUserAndStock(user, stock)).willReturn(true);
 
             // When
-            boolean result = watchlistService.setWatchlistStatus(
-                    userId,
-                    stockCode,
-                    true
-            );
+            boolean result = watchlistService.setWatchlistStatus(userId, stockCode, true);
 
             // Then
             assertThat(result).isTrue();
 
-            verify(watchlistRepository)
-                    .existsByUserAndStock(user, stock);
-
-            verify(watchlistRepository, never())
-                    .save(any(Watchlist.class));
-
-            verify(watchlistRepository, never())
-                    .findByUserAndStock(any(User.class), any(Stock.class));
-
-            verify(watchlistRepository, never())
-                    .delete(any(Watchlist.class));
+            verify(watchlistRepository).existsByUserAndStock(user, stock);
+            verify(watchlistRepository, never()).save(any(Watchlist.class));
+            verify(watchlistRepository, never()).findByUserAndStock(any(User.class), any(Stock.class));
+            verify(watchlistRepository, never()).delete(any(Watchlist.class));
         }
     }
 
@@ -142,36 +109,20 @@ class WatchlistServiceTest {
             Stock stock = createStock(stockCode);
             Watchlist watchlist = Watchlist.createWatchlist(user, stock);
 
-            given(userRepository.findById(userId))
-                    .willReturn(Optional.of(user));
-
-            given(stockRepository.findByStockCode(stockCode))
-                    .willReturn(Optional.of(stock));
-
-            given(watchlistRepository.findByUserAndStock(user, stock))
-                    .willReturn(Optional.of(watchlist));
+            given(userRepository.findById(userId)).willReturn(Optional.of(user));
+            given(stockRepository.findByStockCode(stockCode)).willReturn(Optional.of(stock));
+            given(watchlistRepository.findByUserAndStock(user, stock)).willReturn(Optional.of(watchlist));
 
             // When
-            boolean result = watchlistService.setWatchlistStatus(
-                    userId,
-                    stockCode,
-                    false
-            );
+            boolean result = watchlistService.setWatchlistStatus(userId, stockCode, false);
 
             // Then
             assertThat(result).isFalse();
 
-            verify(watchlistRepository)
-                    .findByUserAndStock(user, stock);
-
-            verify(watchlistRepository)
-                    .delete(watchlist);
-
-            verify(watchlistRepository, never())
-                    .existsByUserAndStock(any(User.class), any(Stock.class));
-
-            verify(watchlistRepository, never())
-                    .save(any(Watchlist.class));
+            verify(watchlistRepository).findByUserAndStock(user, stock);
+            verify(watchlistRepository).delete(watchlist);
+            verify(watchlistRepository, never()).existsByUserAndStock(any(User.class), any(Stock.class));
+            verify(watchlistRepository, never()).save(any(Watchlist.class));
         }
 
         @Test
@@ -183,36 +134,20 @@ class WatchlistServiceTest {
             User user = createUser();
             Stock stock = createStock(stockCode);
 
-            given(userRepository.findById(userId))
-                    .willReturn(Optional.of(user));
-
-            given(stockRepository.findByStockCode(stockCode))
-                    .willReturn(Optional.of(stock));
-
-            given(watchlistRepository.findByUserAndStock(user, stock))
-                    .willReturn(Optional.empty());
+            given(userRepository.findById(userId)).willReturn(Optional.of(user));
+            given(stockRepository.findByStockCode(stockCode)).willReturn(Optional.of(stock));
+            given(watchlistRepository.findByUserAndStock(user, stock)).willReturn(Optional.empty());
 
             // When
-            boolean result = watchlistService.setWatchlistStatus(
-                    userId,
-                    stockCode,
-                    false
-            );
+            boolean result = watchlistService.setWatchlistStatus(userId, stockCode, false);
 
             // Then
             assertThat(result).isFalse();
 
-            verify(watchlistRepository)
-                    .findByUserAndStock(user, stock);
-
-            verify(watchlistRepository, never())
-                    .delete(any(Watchlist.class));
-
-            verify(watchlistRepository, never())
-                    .existsByUserAndStock(any(User.class), any(Stock.class));
-
-            verify(watchlistRepository, never())
-                    .save(any(Watchlist.class));
+            verify(watchlistRepository).findByUserAndStock(user, stock);
+            verify(watchlistRepository, never()).delete(any(Watchlist.class));
+            verify(watchlistRepository, never()).existsByUserAndStock(any(User.class), any(Stock.class));
+            verify(watchlistRepository, never()).save(any(Watchlist.class));
         }
     }
 
@@ -227,37 +162,20 @@ class WatchlistServiceTest {
             Long userId = 1L;
             String stockCode = "005930";
 
-            given(userRepository.findById(userId))
-                    .willReturn(Optional.empty());
+            given(userRepository.findById(userId)).willReturn(Optional.empty());
 
             // When
             BusinessException exception = assertThrows(
                     BusinessException.class,
-                    () -> watchlistService.setWatchlistStatus(
-                            userId,
-                            stockCode,
-                            true
-                    )
+                    () -> watchlistService.setWatchlistStatus(userId, stockCode, true)
             );
 
             // Then
-            assertThat(exception.getErrorCode())
-                    .isEqualTo(ErrorCode.USER_NOT_FOUND);
+            assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.USER_NOT_FOUND);
 
-            verify(stockRepository, never())
-                    .findByStockCode(anyString());
-
-            verify(watchlistRepository, never())
-                    .existsByUserAndStock(any(User.class), any(Stock.class));
-
-            verify(watchlistRepository, never())
-                    .findByUserAndStock(any(User.class), any(Stock.class));
-
-            verify(watchlistRepository, never())
-                    .save(any(Watchlist.class));
-
-            verify(watchlistRepository, never())
-                    .delete(any(Watchlist.class));
+            verify(stockRepository, never()).findByStockCode(anyString());
+            verify(watchlistRepository, never()).save(any(Watchlist.class));
+            verify(watchlistRepository, never()).delete(any(Watchlist.class));
         }
 
         @Test
@@ -268,37 +186,20 @@ class WatchlistServiceTest {
             String stockCode = "005930";
             User user = createUser();
 
-            given(userRepository.findById(userId))
-                    .willReturn(Optional.of(user));
-
-            given(stockRepository.findByStockCode(stockCode))
-                    .willReturn(Optional.empty());
+            given(userRepository.findById(userId)).willReturn(Optional.of(user));
+            given(stockRepository.findByStockCode(stockCode)).willReturn(Optional.empty());
 
             // When
             BusinessException exception = assertThrows(
                     BusinessException.class,
-                    () -> watchlistService.setWatchlistStatus(
-                            userId,
-                            stockCode,
-                            true
-                    )
+                    () -> watchlistService.setWatchlistStatus(userId, stockCode, true)
             );
 
             // Then
-            assertThat(exception.getErrorCode())
-                    .isEqualTo(ErrorCode.STOCK_NOT_FOUND);
+            assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.STOCK_NOT_FOUND);
 
-            verify(watchlistRepository, never())
-                    .existsByUserAndStock(any(User.class), any(Stock.class));
-
-            verify(watchlistRepository, never())
-                    .findByUserAndStock(any(User.class), any(Stock.class));
-
-            verify(watchlistRepository, never())
-                    .save(any(Watchlist.class));
-
-            verify(watchlistRepository, never())
-                    .delete(any(Watchlist.class));
+            verify(watchlistRepository, never()).save(any(Watchlist.class));
+            verify(watchlistRepository, never()).delete(any(Watchlist.class));
         }
     }
 
@@ -323,7 +224,9 @@ class WatchlistServiceTest {
                 "101010",
                 "주권",
                 "1010",
-                "주식"
+                "주식",
+                true,
+                true
         );
     }
 }
