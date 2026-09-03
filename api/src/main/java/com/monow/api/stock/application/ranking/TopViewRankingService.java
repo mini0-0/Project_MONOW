@@ -1,4 +1,4 @@
-package com.monow.api.stock.application;
+package com.monow.api.stock.application.ranking;
 
 
 import com.monow.api.external.kis.client.KisTopViewClient;

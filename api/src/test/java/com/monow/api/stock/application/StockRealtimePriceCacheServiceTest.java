@@ -1,8 +1,8 @@
 package com.monow.api.stock.application;
 
 import com.monow.api.external.kis.type.CurrentPriceMarketType;
-import com.monow.api.stock.dto.response.RealtimeStockPriceResponse;
-import com.monow.api.stock.dto.response.StockCurrentPriceResponse;
+import com.monow.api.stock.application.realtime.StockRealtimePriceCacheService;
+import com.monow.api.stock.dto.response.StockRealtimePriceResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -61,7 +61,7 @@ class StockRealtimePriceCacheServiceTest {
                 16
         );
 
-        RealtimeStockPriceResponse response = new RealtimeStockPriceResponse(
+        StockRealtimePriceResponse response = new StockRealtimePriceResponse(
                 marketType,
                 stockCode,
                 currentPrice,

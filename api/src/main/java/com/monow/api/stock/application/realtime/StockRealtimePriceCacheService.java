@@ -1,8 +1,7 @@
-package com.monow.api.stock.application;
+package com.monow.api.stock.application.realtime;
 
 import com.monow.api.external.kis.type.CurrentPriceMarketType;
-import com.monow.api.stock.dto.response.RealtimeStockPriceResponse;
-import com.monow.api.stock.dto.response.StockCurrentPriceResponse;
+import com.monow.api.stock.dto.response.StockRealtimePriceResponse;
 import com.monow.global.error.exception.BusinessException;
 import com.monow.global.error.model.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -10,10 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -23,10 +19,11 @@ public class StockRealtimePriceCacheService {
 
     private final RedisTemplate<String, Object> redisTemplate;
 
+    // WebSocket으로 수신한 최신 실시간 가격 Redis 저장
     public void saveLatestPrice(
             CurrentPriceMarketType marketType,
             String stockCode,
-            RealtimeStockPriceResponse response
+            StockRealtimePriceResponse response
     ) {
         String redisKey = REDIS_KEY_PREFIX + marketType.name() + ":" + stockCode;
 
@@ -39,7 +36,8 @@ public class StockRealtimePriceCacheService {
         );
     }
 
-    public RealtimeStockPriceResponse findLatestPrice(
+    // 특정 종목의 최신 실시간 가격 단건 조회
+    public StockRealtimePriceResponse findLatestPrice(
             CurrentPriceMarketType marketType,
             String stockCode
     ) {
@@ -55,7 +53,7 @@ public class StockRealtimePriceCacheService {
             throw new BusinessException(ErrorCode.REALTIME_STOCK_PRICE_NOT_FOUND);
         }
 
-        if (!(cachedValue instanceof RealtimeStockPriceResponse)) {
+        if (!(cachedValue instanceof StockRealtimePriceResponse)) {
             log.warn(
                     "Redis 실시간 주가 타입 오류 - redisKey={}, actualType={}",
                     redisKey,
@@ -64,13 +62,15 @@ public class StockRealtimePriceCacheService {
             throw  new BusinessException(ErrorCode.REALTIME_PRICE_INVALID_RESPONSE);
         }
 
-        RealtimeStockPriceResponse response = (RealtimeStockPriceResponse) cachedValue;
+        StockRealtimePriceResponse response = (StockRealtimePriceResponse) cachedValue;
 
         return response;
 
     }
 
-    public Map<String, RealtimeStockPriceResponse> findLatestPrices(CurrentPriceMarketType marketType, List<String> stockCodes) {
+
+    // 여러 종목의 최신 실시간 가격 일괄 조회
+    public Map<String, StockRealtimePriceResponse> findLatestPrices(CurrentPriceMarketType marketType, List<String> stockCodes) {
         List<String> redisKeys = new ArrayList<>();
 
         for (String stockCode : stockCodes) {
@@ -89,7 +89,7 @@ public class StockRealtimePriceCacheService {
             throw new BusinessException(ErrorCode.REALTIME_STOCK_PRICE_NOT_FOUND);
         }
 
-        Map<String, RealtimeStockPriceResponse> result = new HashMap<>();
+        Map<String, StockRealtimePriceResponse> result = new HashMap<>();
 
         for (int i = 0; i < stockCodes.size(); i++) {
             String stockCode = stockCodes.get(i);
@@ -100,11 +100,11 @@ public class StockRealtimePriceCacheService {
                 throw new BusinessException(ErrorCode.REALTIME_STOCK_PRICE_NOT_FOUND);
             }
 
-            if (!(cachedValue instanceof RealtimeStockPriceResponse)) {
+            if (!(cachedValue instanceof StockRealtimePriceResponse)) {
                 throw new BusinessException(ErrorCode.REALTIME_PRICE_INVALID_RESPONSE);
             }
 
-            RealtimeStockPriceResponse response = (RealtimeStockPriceResponse) cachedValue;
+            StockRealtimePriceResponse response = (StockRealtimePriceResponse) cachedValue;
             result.put(stockCode, response);
 
         }

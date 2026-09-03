@@ -1,7 +1,7 @@
-package com.monow.api.stock.application;
+package com.monow.api.stock.application.realtime;
 
 import com.monow.api.external.kis.type.CurrentPriceMarketType;
-import com.monow.api.stock.dto.response.RealtimeStockPriceResponse;
+import com.monow.api.stock.dto.response.StockRealtimePriceResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -16,7 +16,7 @@ public class StockRealtimePriceHandler {
     public void handleRealtimePrice(
             CurrentPriceMarketType marketType,
             String stockCode,
-            RealtimeStockPriceResponse response
+            StockRealtimePriceResponse response
     ) {
        stockRealtimePriceCacheService.saveLatestPrice(marketType, stockCode, response);
        stockRealtimePricePublisher.publishCurrentPrice(marketType, stockCode,response);
