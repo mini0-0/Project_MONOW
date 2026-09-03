@@ -26,7 +26,7 @@ public class StockCurrentPriceController {
      * 상세 페이지 진입 시 REST API로 현재가 상세 데이터 1회 조회
      * 실시간 변경 데이터는 WebSocket topic으로 갱신
      *
-     * ex) GET /api/v1/stocks/005930/current-price/KRX
+     * ex) GET /api/v1/stocks/005930/current-price
      */
     @GetMapping("/{stockCode}/current-price")
     public ApiResponse<StockCurrentPriceResponse> getCurrentPrice(
@@ -44,7 +44,7 @@ public class StockCurrentPriceController {
      * 실시간 데이터 수신용 WebSocket endpoint/topic 반환
      *
      * ex)
-     * GET /api/v1/stocks/005930/detail?marketType=KRX
+     * GET /api/v1/stocks/005930/detail
      */
     @GetMapping("/{stockCode}/detail")
     public ApiResponse<StockDetailResponse> getStockDetail(
@@ -95,14 +95,13 @@ public class StockCurrentPriceController {
      *
      * 특정 종목의 실시간 현재가 연결 등록 요청 전송 확인용 API
      *
-     * ex) POST /api/v1/stocks/005930/realtime/KRX/subscribe
+     * ex) POST /api/v1/stocks/005930/realtime/subscribe
      */
-    @PostMapping("/{stockCode}/realtime/{marketType}/subscribe")
+    @PostMapping("/{stockCode}/realtime/subscribe")
     public ApiResponse<String> subscribeRealtimePrice(
-            @PathVariable(value = "stockCode") String stockCode,
-            @PathVariable(value = "marketType") CurrentPriceMarketType marketType
+            @PathVariable(value = "stockCode") String stockCode
     ) {
-        stockRealtimePriceConnectionService.subscribe(marketType, stockCode);
+        stockRealtimePriceConnectionService.subscribeCurrentMarket(stockCode);
 
         return ApiResponse.success(stockCode + " 실시간 현재가 연결 등록 요청 완료");
     }
