@@ -4,7 +4,6 @@ package com.monow.api.stock.controller;
 import com.monow.api.external.kis.application.DomesticStockSyncService;
 import com.monow.api.external.kis.application.StockInfoSyncService;
 import com.monow.api.external.kis.application.StockPriceSyncService;
-import com.monow.api.external.kis.dto.response.KisStockInfoResponse;
 import com.monow.api.stock.dto.request.StockSyncRequest;
 import com.monow.global.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -13,12 +12,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/admin/stocks")
 @RequiredArgsConstructor
 public class StockAdminController {
-
-    private final StockInfoSyncService stockInfoSyncService;
 
     private final DomesticStockSyncService domesticStockSyncService;
 
@@ -28,12 +27,13 @@ public class StockAdminController {
     @PostMapping("/sync")
     public ApiResponse<Void> syncStocks(@RequestBody StockSyncRequest request) {
 
-        for (StockSyncRequest.StockSyncItem stock : request.stocks()) {
-            stockInfoSyncService.syncStockInfo(
-                    stock.stockCode(),
-                    stock.marketType()
-            );
-        }
+        List<String> stockCodes = request.stocks()
+                .stream()
+                .map(StockSyncRequest.StockSyncItem::stockCode)
+                .distinct()
+                .toList();
+
+        domesticStockSyncService.syncSelectedDomesticStocks(stockCodes);
 
         return ApiResponse.success();
     }

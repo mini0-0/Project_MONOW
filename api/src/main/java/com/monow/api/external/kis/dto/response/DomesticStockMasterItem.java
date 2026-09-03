@@ -5,6 +5,8 @@ import com.monow.domain.stock.entity.DomesticStockMarketType;
 public record DomesticStockMasterItem(
         String stockCode,
         String stockName,
-        DomesticStockMarketType marketType
+        DomesticStockMarketType marketType,
+        boolean krxTradable,
+        boolean nxtTradable
 ) {
 }

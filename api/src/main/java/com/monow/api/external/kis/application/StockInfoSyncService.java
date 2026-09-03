@@ -25,7 +25,7 @@ public class StockInfoSyncService {
     private final KisStockInfoMapper kisStockInfoMapper;
 
     @Transactional
-    public void syncStockInfo(String stockCode, DomesticStockMarketType marketType) {
+    public void syncStockInfo(String stockCode, DomesticStockMarketType marketType, boolean krxTradable, boolean nxtTradable) {
 
         if (stockRepository.existsByStockCode(stockCode)) {
             return;
@@ -45,7 +45,7 @@ public class StockInfoSyncService {
 
         KisStockInfoResponse.Output output = response.output();
 
-        Stock stock = kisStockInfoMapper.toEntity(output, marketType);
+        Stock stock = kisStockInfoMapper.toEntity(output, marketType, krxTradable, nxtTradable);
 
         stockRepository.save(stock);
 

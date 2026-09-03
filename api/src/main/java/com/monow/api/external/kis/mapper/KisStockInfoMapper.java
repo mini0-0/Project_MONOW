@@ -8,7 +8,13 @@ import org.springframework.stereotype.Component;
 @Component
 public class KisStockInfoMapper {
 
-    public Stock toEntity(KisStockInfoResponse.Output output, DomesticStockMarketType marketType) {
+    public Stock toEntity(
+            KisStockInfoResponse.Output output,
+            DomesticStockMarketType marketType,
+            boolean krxTradable,
+            boolean nxtTradable
+
+    ) {
         return Stock.createStock(
                 output.productNumber(),
                 output.standardProductNumber(),
@@ -20,7 +26,9 @@ public class KisStockInfoMapper {
                 output.productClassCode(),
                 output.productClassName(),
                 output.investmentProductTypeCode(),
-                output.investmentProductTypeName()
+                output.investmentProductTypeName(),
+                krxTradable,
+                nxtTradable
         );
 
 

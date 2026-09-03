@@ -2,7 +2,6 @@ package com.monow.api.stock.application;
 
 import com.monow.api.external.kis.type.CurrentPriceMarketType;
 import com.monow.api.stock.dto.response.RealtimeStockPriceResponse;
-import com.monow.api.stock.dto.response.StockCurrentPriceResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

@@ -14,10 +14,7 @@ public record StockSyncRequest(
 ) {
         public record StockSyncItem(
                 @NotBlank(message = "종목 코드는 필수입니다.")
-                String stockCode,
-
-                @NotNull(message = "시장 구분은 필수입니다.")
-                DomesticStockMarketType marketType
+                String stockCode
 
         ) {
         }
