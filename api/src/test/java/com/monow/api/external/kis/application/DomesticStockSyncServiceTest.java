@@ -52,26 +52,38 @@ public class DomesticStockSyncServiceTest {
     class SyncDomesticStocks {
 
         @Test
-        @DisplayName("[성공] - 추출한 stockCode 중복 제거 후 동기화")
+        @DisplayName("[성공] - 기존에 저장된 종목을 제외하고 신규 종목의 시장별 거래 가능 여부와 함께 동기화")
         void syncDomesticStocks_whenStockCodesParsed_syncDistinctStockCodes() {
             // Given
             Map<DomesticStockMarketType, byte[]> zipFiles = new EnumMap<>(DomesticStockMarketType.class);
             zipFiles.put(DomesticStockMarketType.KOSPI, new byte[]{1});
             zipFiles.put(DomesticStockMarketType.KOSDAQ, new byte[]{2});
+            zipFiles.put(DomesticStockMarketType.NXT_KOSPI, new byte[]{3});
+            zipFiles.put(DomesticStockMarketType.NXT_KOSDAQ, new byte[]{4});
 
             Map<DomesticStockMarketType, byte[]> mstFiles = new EnumMap<>(DomesticStockMarketType.class);
-            mstFiles.put(DomesticStockMarketType.KOSPI, new byte[]{3});
-            mstFiles.put(DomesticStockMarketType.KOSDAQ, new byte[]{4});
+            mstFiles.put(DomesticStockMarketType.KOSPI, new byte[]{5});
+            mstFiles.put(DomesticStockMarketType.KOSDAQ, new byte[]{6});
+            mstFiles.put(DomesticStockMarketType.NXT_KOSPI, new byte[]{7});
+            mstFiles.put(DomesticStockMarketType.NXT_KOSDAQ, new byte[]{8});
 
+            Map<DomesticStockMarketType, List<String>> stockCodes = new EnumMap<>(DomesticStockMarketType.class);
 
-            Map<DomesticStockMarketType, List<String>> stockCodes =
-                    new EnumMap<>(DomesticStockMarketType.class);
             stockCodes.put(
                     DomesticStockMarketType.KOSPI,
                     List.of("005930", "000660")
             );
             stockCodes.put(
                     DomesticStockMarketType.KOSDAQ,
+                    List.of("035720")
+            );
+            stockCodes.put(
+                    DomesticStockMarketType.NXT_KOSPI,
+                    List.of("005930")
+            );
+
+            stockCodes.put(
+                    DomesticStockMarketType.NXT_KOSDAQ,
                     List.of("035720")
             );
 
@@ -86,7 +98,9 @@ public class DomesticStockSyncServiceTest {
                     "101010",
                     "주권",
                     "1010",
-                    "주식"
+                    "주식",
+                    true,
+                    true
             );
 
             given(kisStockMasterDownloader.downloaderDomesticStock())
@@ -105,26 +119,131 @@ public class DomesticStockSyncServiceTest {
             domesticStockSyncService.syncDomesticStocks();
 
             // Then
-            verify(kisStockMasterDownloader).downloaderDomesticStock();
-            verify(kisStockMasterExtractor).extractMstFiles(zipFiles);
-            verify(kisStockMasterParser).parseStockCodes(mstFiles);
+            verify(kisStockMasterDownloader, times(1))
+                    .downloaderDomesticStock();
+
+            verify(kisStockMasterExtractor, times(1))
+                    .extractMstFiles(zipFiles);
+
+            verify(kisStockMasterParser, times(1))
+                    .parseStockCodes(mstFiles);
+
             verify(stockInfoSyncService, never()).syncStockInfo(
-                            "005930",
-                            DomesticStockMarketType.KOSPI
-                    );
+                    eq("005930"),
+                    any(DomesticStockMarketType.class),
+                    anyBoolean(),
+                    anyBoolean()
+            );
             verify(stockInfoSyncService).syncStockInfo(
-                            "000660",
-                            DomesticStockMarketType.KOSPI
-                    );
+                    "000660",
+                    DomesticStockMarketType.KOSPI,
+                    true,
+                    false
+            );
             verify(stockInfoSyncService).syncStockInfo(
-                            "035720",
-                            DomesticStockMarketType.KOSDAQ
-                    );
-            verify(stockInfoSyncService, times(2))
-                    .syncStockInfo(
-                            anyString(),
-                            any(DomesticStockMarketType.class)
-                    );
+                    "035720",
+                    DomesticStockMarketType.KOSDAQ,
+                    true,
+                    true
+            );
+            verify(stockInfoSyncService, times(2)).syncStockInfo(
+                    anyString(),
+                    any(DomesticStockMarketType.class),
+                    anyBoolean(),
+                    anyBoolean()
+            );
+        }
+
+        @Nested
+        @DisplayName("선택 국내주식 종목 동기화")
+        class SyncSelectedDomesticStocks {
+
+            @Test
+            @DisplayName("[성공] - 중복 요청 종목은 한 번만 처리하고 마스터 파일도 한 번만 조회")
+            void givenDuplicateStockCodes_whenSyncSelectedDomesticStocks_thenSyncEachStockOnce() {
+                // Given
+                Map<DomesticStockMarketType, byte[]> zipFiles = new EnumMap<>(DomesticStockMarketType.class);
+
+                zipFiles.put(DomesticStockMarketType.KOSPI, new byte[]{1});
+                zipFiles.put(DomesticStockMarketType.KOSDAQ, new byte[]{2});
+                zipFiles.put(DomesticStockMarketType.NXT_KOSPI, new byte[]{3});
+                zipFiles.put(DomesticStockMarketType.NXT_KOSDAQ, new byte[]{4});
+
+                Map<DomesticStockMarketType, byte[]> mstFiles = new EnumMap<>(DomesticStockMarketType.class);
+
+                mstFiles.put(DomesticStockMarketType.KOSPI, new byte[]{5});
+                mstFiles.put(DomesticStockMarketType.KOSDAQ, new byte[]{6});
+                mstFiles.put(DomesticStockMarketType.NXT_KOSPI, new byte[]{7});
+                mstFiles.put(DomesticStockMarketType.NXT_KOSDAQ, new byte[]{8});
+
+                Map<DomesticStockMarketType, List<String>> stockCodes = new EnumMap<>(DomesticStockMarketType.class);
+
+                stockCodes.put(
+                        DomesticStockMarketType.KOSPI,
+                        List.of("005930", "000660")
+                );
+
+                stockCodes.put(
+                        DomesticStockMarketType.KOSDAQ,
+                        List.of("035720")
+                );
+
+                stockCodes.put(
+                        DomesticStockMarketType.NXT_KOSPI,
+                        List.of("005930")
+                );
+
+                stockCodes.put(
+                        DomesticStockMarketType.NXT_KOSDAQ,
+                        List.of("035720")
+                );
+
+                given(kisStockMasterDownloader.downloaderDomesticStock())
+                        .willReturn(zipFiles);
+
+                given(kisStockMasterExtractor.extractMstFiles(zipFiles))
+                        .willReturn(mstFiles);
+
+                given(kisStockMasterParser.parseStockCodes(mstFiles))
+                        .willReturn(stockCodes);
+
+                given(stockRepository.findByStockCodeIn(anyCollection()))
+                        .willReturn(List.of());
+
+                List<String> requestedStockCodes =
+                        List.of("000660", "000660", "035720");
+
+                // When
+                domesticStockSyncService.syncSelectedDomesticStocks(
+                        requestedStockCodes
+                );
+
+                // Then
+                verify(kisStockMasterDownloader, times(1))
+                        .downloaderDomesticStock();
+
+                verify(stockInfoSyncService, times(1)).syncStockInfo(
+                        "000660",
+                        DomesticStockMarketType.KOSPI,
+                        true,
+                        false
+                );
+
+                verify(stockInfoSyncService, times(1)).syncStockInfo(
+                        "035720",
+                        DomesticStockMarketType.KOSDAQ,
+                        true,
+                        true
+                );
+
+                verify(stockInfoSyncService, times(2)).syncStockInfo(
+                        anyString(),
+                        any(DomesticStockMarketType.class),
+                        anyBoolean(),
+                        anyBoolean()
+                );
+            }
+
         }
     }
 

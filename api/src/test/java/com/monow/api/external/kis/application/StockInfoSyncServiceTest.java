@@ -20,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -28,6 +29,8 @@ import static org.mockito.Mockito.verify;
 public class StockInfoSyncServiceTest {
     private static final String STOCK_CODE = "005930";
     private static final String ACCESS_TOKEN = "access_token";
+    private static final boolean KRX_TRADABLE = true;
+    private static final boolean NXT_TRADABLE = true;
 
     @Mock
     private StockRepository stockRepository;
@@ -90,7 +93,9 @@ public class StockInfoSyncServiceTest {
                     "101010",
                     "주권",
                     "1010",
-                    "주식"
+                    "주식",
+                    KRX_TRADABLE,
+                    NXT_TRADABLE
             );
 
             given(stockRepository.existsByStockCode(STOCK_CODE))
@@ -102,18 +107,17 @@ public class StockInfoSyncServiceTest {
             given(kisStockInfoClient.fetchStockInfo(ACCESS_TOKEN, STOCK_CODE))
                     .willReturn(response);
 
-            given(kisStockInfoMapper.toEntity(output, marketType))
-
+            given(kisStockInfoMapper.toEntity(output, marketType, KRX_TRADABLE, NXT_TRADABLE))
                     .willReturn(stock);
 
             // When
-            stockInfoSyncService.syncStockInfo(STOCK_CODE, marketType);
+            stockInfoSyncService.syncStockInfo(STOCK_CODE, marketType, KRX_TRADABLE, NXT_TRADABLE);
 
             // Then
             verify(stockRepository).existsByStockCode(STOCK_CODE);
             verify(kisAccessTokenProvider).getAccessToken();
             verify(kisStockInfoClient).fetchStockInfo(ACCESS_TOKEN, STOCK_CODE);
-            verify(kisStockInfoMapper).toEntity(output, marketType);
+            verify(kisStockInfoMapper).toEntity(output, marketType, KRX_TRADABLE, NXT_TRADABLE);
             verify(stockRepository).save(stock);
 
         }
@@ -127,13 +131,13 @@ public class StockInfoSyncServiceTest {
                     .willReturn(true);
 
             // When
-            stockInfoSyncService.syncStockInfo(STOCK_CODE, marketType);
+            stockInfoSyncService.syncStockInfo(STOCK_CODE, marketType, KRX_TRADABLE, NXT_TRADABLE);
 
             // Then
             verify(stockRepository).existsByStockCode(STOCK_CODE);
             verify(kisAccessTokenProvider, never()).getAccessToken();
             verify(kisStockInfoClient, never()).fetchStockInfo(any(), any());
-            verify(kisStockInfoMapper, never()).toEntity(any(), any());
+            verify(kisStockInfoMapper, never()).toEntity(any(), any(DomesticStockMarketType.class), anyBoolean(), anyBoolean());
             verify(stockRepository, never()).save(any());
 
         }
@@ -162,7 +166,7 @@ public class StockInfoSyncServiceTest {
                     .willReturn(failResponse);
 
             // When & Then
-            assertThatThrownBy(() -> stockInfoSyncService.syncStockInfo(STOCK_CODE, marketType))
+            assertThatThrownBy(() -> stockInfoSyncService.syncStockInfo(STOCK_CODE, marketType, KRX_TRADABLE, NXT_TRADABLE))
                     .isInstanceOf(BusinessException.class)
                     .satisfies(exception -> {
                         BusinessException businessException = (BusinessException) exception;
@@ -172,7 +176,7 @@ public class StockInfoSyncServiceTest {
             verify(stockRepository).existsByStockCode(STOCK_CODE);
             verify(kisAccessTokenProvider).getAccessToken();
             verify(kisStockInfoClient).fetchStockInfo(ACCESS_TOKEN, STOCK_CODE);
-            verify(kisStockInfoMapper, never()).toEntity(any(), any());
+            verify(kisStockInfoMapper, never()).toEntity(any(), any(), anyBoolean(), anyBoolean());
             verify(stockRepository, never()).save(any());
 
         }
@@ -201,7 +205,7 @@ public class StockInfoSyncServiceTest {
                     .willReturn(response);
 
             // When & Then
-            assertThatThrownBy(() -> stockInfoSyncService.syncStockInfo(STOCK_CODE, marketType))
+            assertThatThrownBy(() -> stockInfoSyncService.syncStockInfo(STOCK_CODE, marketType, KRX_TRADABLE, NXT_TRADABLE))
                     .isInstanceOf(BusinessException.class)
                     .satisfies(exception -> {
                         BusinessException businessException = (BusinessException) exception;
@@ -211,7 +215,7 @@ public class StockInfoSyncServiceTest {
             verify(stockRepository).existsByStockCode(STOCK_CODE);
             verify(kisAccessTokenProvider).getAccessToken();
             verify(kisStockInfoClient).fetchStockInfo(ACCESS_TOKEN, STOCK_CODE);
-            verify(kisStockInfoMapper, never()).toEntity(any(), any());
+            verify(kisStockInfoMapper, never()).toEntity(any(), any(), anyBoolean(), anyBoolean());
             verify(stockRepository, never()).save(any());
 
         }
