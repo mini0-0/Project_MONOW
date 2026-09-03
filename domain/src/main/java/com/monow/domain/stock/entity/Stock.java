@@ -53,6 +53,12 @@ public class Stock extends BaseTimeEntity {
     @Column(name = "is_active")
     private Boolean isActive;
 
+    @Column(name = "krx_tradable", nullable = false)
+    private Boolean krxTradable;
+
+    @Column(name = "nxt_tradable", nullable = false)
+    private Boolean nxtTradable;
+
     private Stock(
             String productNumber,
             String standardProductNumber,
@@ -64,7 +70,9 @@ public class Stock extends BaseTimeEntity {
             String productClassCode,
             String productClassName,
             String investmentProductTypeCode,
-            String investmentProductTypeName
+            String investmentProductTypeName,
+            Boolean krxTradable,
+            Boolean nxtTradable
     ) {
         this.productNumber = productNumber;
         this.standardProductNumber = standardProductNumber;
@@ -77,6 +85,8 @@ public class Stock extends BaseTimeEntity {
         this.productClassName = productClassName;
         this.investmentProductTypeCode = investmentProductTypeCode;
         this.investmentProductTypeName = investmentProductTypeName;
+        this.krxTradable = krxTradable;
+        this.nxtTradable = nxtTradable;
         this.isActive = true;
     }
 
@@ -91,7 +101,9 @@ public class Stock extends BaseTimeEntity {
             String productClassCode,
             String productClassName,
             String investmentProductTypeCode,
-            String investmentProductTypeName
+            String investmentProductTypeName,
+            Boolean krxTradable,
+            Boolean nxtTradable
     ) {
         return new Stock(
                 productNumber,
@@ -104,7 +116,9 @@ public class Stock extends BaseTimeEntity {
                 productClassCode,
                 productClassName,
                 investmentProductTypeCode,
-                investmentProductTypeName
+                investmentProductTypeName,
+                krxTradable,
+                nxtTradable
         );
     }
 }
