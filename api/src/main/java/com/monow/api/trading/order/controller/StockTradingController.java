@@ -1,7 +1,7 @@
-package com.monow.api.trading.controller;
+package com.monow.api.trading.order.controller;
 
-import com.monow.api.trading.application.StockTradingService;
-import com.monow.api.trading.dto.request.StockOrderRequest;
+import com.monow.api.trading.order.application.StockTradingService;
+import com.monow.api.trading.order.dto.request.StockOrderRequest;
 import com.monow.global.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

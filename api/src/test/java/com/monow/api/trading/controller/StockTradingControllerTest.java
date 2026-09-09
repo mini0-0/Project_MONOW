@@ -2,8 +2,9 @@ package com.monow.api.trading.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.monow.api.external.kis.type.CurrentPriceMarketType;
-import com.monow.api.trading.application.StockTradingService;
-import com.monow.api.trading.dto.request.StockOrderRequest;
+import com.monow.api.trading.order.application.StockTradingService;
+import com.monow.api.trading.order.dto.request.StockOrderRequest;
+import com.monow.api.trading.order.controller.StockTradingController;
 import com.monow.domain.order.entity.OrderType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
