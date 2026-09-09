@@ -1,4 +1,4 @@
-package com.monow.api.trading.dto.response;
+package com.monow.api.trading.history.dto.response;
 
 import com.monow.domain.order.entity.OrderMarketType;
 import com.monow.domain.stock.entity.DomesticStockMarketType;

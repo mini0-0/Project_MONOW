@@ -1,9 +1,8 @@
-package com.monow.api.trading.controller;
+package com.monow.api.trading.history.controller;
 
-import com.monow.api.trading.application.TransactionHistoryQueryService;
-import com.monow.api.trading.dto.response.TransactionHistoryDetailResponse;
-import com.monow.api.trading.dto.response.TransactionHistoryListResponse;
-import com.monow.domain.transaction.repository.TransactionHistoryDetailQueryResult;
+import com.monow.api.trading.history.application.TransactionHistoryQueryService;
+import com.monow.api.trading.history.dto.response.TransactionHistoryDetailResponse;
+import com.monow.api.trading.history.dto.response.TransactionHistoryListResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
