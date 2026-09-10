@@ -7,7 +7,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-public interface StockRepository extends JpaRepository<Stock, Long> {
+public interface StockRepository extends JpaRepository<Stock, Long>, StockRepositoryCustom {
     List<Stock> findByStockCodeIn(Collection<String> stockCodes);
 
     Optional<Stock> findByStockCode(String stockCode);
@@ -20,4 +20,5 @@ public interface StockRepository extends JpaRepository<Stock, Long> {
             List<String> stockCodes,
             String productClassCode
     );
+
 }
