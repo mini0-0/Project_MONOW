@@ -2,6 +2,7 @@ package com.monow.api.stock.controller;
 
 import com.monow.api.external.kis.application.DomesticStockSyncService;
 import com.monow.api.external.kis.application.StockPriceSyncService;
+import com.monow.api.stock.admin.controller.StockAdminController;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

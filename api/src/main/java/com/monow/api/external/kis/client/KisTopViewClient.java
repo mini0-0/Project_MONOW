@@ -4,7 +4,6 @@ import com.monow.api.external.kis.application.KisAccessTokenProvider;
 import com.monow.api.external.kis.config.KisProperties;
 import com.monow.api.external.kis.dto.response.KisTopViewItem;
 import com.monow.api.external.kis.dto.response.KisTopViewResponse;
-import com.monow.api.stock.dto.response.TopViewRankingResponse;
 import com.monow.global.error.exception.BusinessException;
 import com.monow.global.error.model.ErrorCode;
 import lombok.RequiredArgsConstructor;

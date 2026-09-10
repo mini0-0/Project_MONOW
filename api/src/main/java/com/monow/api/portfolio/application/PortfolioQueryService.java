@@ -1,18 +1,16 @@
 package com.monow.api.portfolio.application;
 
-import com.monow.api.external.kis.type.CurrentPriceMarketType;
 import com.monow.api.portfolio.dto.response.PortfolioHoldingResponse;
 import com.monow.api.portfolio.dto.response.PortfolioResponse;
 import com.monow.api.portfolio.dto.response.PortfolioSummaryResponse;
-import com.monow.api.stock.application.currentprice.StockCurrentPriceMarketSelection;
-import com.monow.api.stock.application.currentprice.StockCurrentPriceMarketSelector;
-import com.monow.api.stock.application.realtime.StockRealtimePriceCacheService;
-import com.monow.api.stock.dto.response.StockRealtimePriceResponse;
+import com.monow.api.stock.currentprice.application.StockCurrentPriceMarketSelection;
+import com.monow.api.stock.currentprice.application.StockCurrentPriceMarketSelector;
+import com.monow.api.stock.realtime.application.StockRealtimePriceCacheService;
+import com.monow.api.stock.realtime.dto.response.StockRealtimePriceResponse;
 import com.monow.domain.account.entity.Account;
 import com.monow.domain.account.repository.AccountRepository;
 import com.monow.domain.holding.repository.HoldingRepository;
 import com.monow.domain.holding.repository.PortfolioHoldingQueryResult;
-import com.monow.domain.stock.entity.DomesticStockMarketType;
 import com.monow.global.error.exception.BusinessException;
 import com.monow.global.error.model.ErrorCode;
 import lombok.RequiredArgsConstructor;
