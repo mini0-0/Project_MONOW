@@ -2,8 +2,8 @@ package com.monow.api.stock.application;
 
 import com.monow.api.external.kis.client.KisTopViewClient;
 import com.monow.api.external.kis.dto.response.KisTopViewItem;
-import com.monow.api.stock.application.ranking.TopViewRankingService;
-import com.monow.api.stock.dto.response.TopViewRankingResponse;
+import com.monow.api.stock.ranking.application.TopViewRankingService;
+import com.monow.api.stock.ranking.dto.response.TopViewRankingResponse;
 import com.monow.domain.stock.entity.DomesticStockMarketType;
 import com.monow.domain.stock.entity.Stock;
 import com.monow.domain.stock.repository.StockRepository;

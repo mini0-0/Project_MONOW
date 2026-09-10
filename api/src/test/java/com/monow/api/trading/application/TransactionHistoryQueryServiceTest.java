@@ -1,7 +1,8 @@
 package com.monow.api.trading.application;
 
-import com.monow.api.trading.dto.response.TransactionHistoryDetailResponse;
-import com.monow.api.trading.dto.response.TransactionHistoryListResponse;
+import com.monow.api.trading.history.application.TransactionHistoryQueryService;
+import com.monow.api.trading.history.dto.response.TransactionHistoryDetailResponse;
+import com.monow.api.trading.history.dto.response.TransactionHistoryListResponse;
 import com.monow.domain.order.entity.OrderMarketType;
 import com.monow.domain.stock.entity.DomesticStockMarketType;
 import com.monow.domain.transaction.entity.TransactionHistoryType;

@@ -1,10 +1,11 @@
 package com.monow.api.stock.controller;
 
 import com.monow.api.external.kis.type.CurrentPriceMarketType;
-import com.monow.api.stock.application.currentprice.StockCurrentPriceQueryService;
-import com.monow.api.stock.application.currentprice.StockMarketStatus;
-import com.monow.api.stock.application.realtime.StockRealtimePriceConnectionService;
-import com.monow.api.stock.dto.response.StockCurrentPriceResponse;
+import com.monow.api.stock.currentprice.application.StockCurrentPriceQueryService;
+import com.monow.api.stock.currentprice.application.StockMarketStatus;
+import com.monow.api.stock.currentprice.controller.StockCurrentPriceController;
+import com.monow.api.stock.realtime.application.StockRealtimePriceConnectionService;
+import com.monow.api.stock.currentprice.dto.response.StockCurrentPriceResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
