@@ -1,6 +1,6 @@
 package com.monow.api.auth.dto.response;
 
-import com.monow.domain.auth.dto.result.AuthResult;
+import com.monow.api.auth.application.result.AuthResult;
 import com.monow.domain.user.entity.UserRole;
 import com.monow.domain.user.entity.UserStatus;
 

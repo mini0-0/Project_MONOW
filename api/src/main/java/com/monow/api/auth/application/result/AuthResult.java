@@ -1,4 +1,4 @@
-package com.monow.domain.auth.dto.result;
+package com.monow.api.auth.application.result;
 
 import com.monow.domain.user.entity.User;
 import com.monow.domain.user.entity.UserRole;
