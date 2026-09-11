@@ -1,9 +1,9 @@
 package com.monow.api.auth.controller;
 
-import com.monow.domain.auth.dto.command.LoginCommand;
-import com.monow.domain.auth.dto.command.SignUpCommand;
-import com.monow.domain.auth.dto.result.AuthResult;
-import com.monow.domain.auth.service.AuthService;
+import com.monow.api.auth.application.AuthService;
+import com.monow.api.auth.application.command.LoginCommand;
+import com.monow.api.auth.application.command.SignUpCommand;
+import com.monow.api.auth.application.result.AuthResult;
 import com.monow.domain.user.entity.UserRole;
 import com.monow.domain.user.entity.UserStatus;
 import com.monow.global.error.exception.BusinessException;

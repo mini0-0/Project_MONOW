@@ -1,12 +1,12 @@
 package com.monow.api.auth.controller;
 
+import com.monow.api.auth.application.AuthService;
 import com.monow.api.auth.dto.request.LoginRequest;
 import com.monow.api.auth.dto.request.SignUpRequest;
 import com.monow.api.auth.dto.response.AuthResponse;
-import com.monow.domain.auth.dto.command.LoginCommand;
-import com.monow.domain.auth.dto.command.SignUpCommand;
-import com.monow.domain.auth.dto.result.AuthResult;
-import com.monow.domain.auth.service.AuthService;
+import com.monow.api.auth.application.command.LoginCommand;
+import com.monow.api.auth.application.command.SignUpCommand;
+import com.monow.api.auth.application.result.AuthResult;
 import com.monow.global.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

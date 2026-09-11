@@ -1,4 +1,4 @@
-package com.monow.domain.auth.dto.command;
+package com.monow.api.auth.application.command;
 
 
 public record SignUpCommand(

@@ -1,11 +1,11 @@
-package com.monow.domain.auth.service;
+package com.monow.api.auth.application;
 
+import com.monow.api.auth.application.command.LoginCommand;
+import com.monow.api.auth.application.command.SignUpCommand;
+import com.monow.api.auth.application.result.AuthResult;
 import com.monow.domain.account.entity.Account;
 import com.monow.domain.account.entity.AccountStatus;
 import com.monow.domain.account.service.AccountNumberGenerator;
-import com.monow.domain.auth.dto.command.LoginCommand;
-import com.monow.domain.auth.dto.command.SignUpCommand;
-import com.monow.domain.auth.dto.result.AuthResult;
 import com.monow.domain.user.entity.*;
 import com.monow.domain.account.repository.AccountRepository;
 import com.monow.domain.user.repository.UserRepository;

@@ -1,6 +1,6 @@
 package com.monow.api.auth.dto.request;
 
-import com.monow.domain.auth.dto.command.LoginCommand;
+import com.monow.api.auth.application.command.LoginCommand;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
