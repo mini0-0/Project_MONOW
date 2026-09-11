@@ -1,0 +1,90 @@
+[33me9fa3ac[m[33m ([m[1;36mHEAD -> [m[1;32mdev[m[33m)[m refactor: 관심종목 상태 변경 로직 수정
+[33m71f7d64[m Merge pull request #14 from mini0-0/feature/stock-price
+[33m2e4b6a6[m[33m ([m[1;31morigin/feature/watchlist[m[33m, [m[1;31morigin/feature/stock-price[m[33m, [m[1;32mfeature/watchlist[m[33m, [m[1;32mfeature/stock-price[m[33m)[m feat: KIS WebSocket관련 오류 추가
+[33mcad1d0f[m feat: 주식 상세 API에 실시간 주가 구독 연동
+[33m3239a6e[m feat: 현재가 조회에 종목 메타데이터 캐시 적용
+[33mdc2c836[m feat: 실시간 주가 구독 Redis 저장 파이프라인 구현
+[33m1bfa043[m feat: KIS WebSocket 실시간 주가 데이터 수신 구현
+[33m5434172[m feat: KIS WebSocket 연결 설정 및 approval key 발급 구현
+[33m3fa450b[m Merge pull request #13 from mini0-0/feature/stock-price
+[33ma876506[m refactor: 불필요함 import 정리
+[33m382fc88[m feat: 관심종목 상태 변경 API 구현
+[33me741d87[m feat: 관심종목 상태 변경 서비스 구현
+[33m70df676[m feat: 관심 종목 도메인 추가
+[33mf58ca0b[m Merge pull request #12 from mini0-0/feature/stock-price
+[33m2208a42[m test: KIS accessToken Provider 테스트 수정
+[33m723e7b2[m feat: KIS accessToken 재발급 구간에 Redis 분산락 적용
+[33mbccdf55[m feat: KIS accessToken Redis 캐싱 적용
+[33mfb536ad[m Merge pull request #11 from mini0-0/feature/stock-price
+[33m7834aef[m refactor: test 코드 accessToken 오타 수정
+[33m432b80b[m refactor: 사용 안하는 import 정리
+[33mbcbaf02[m feat: 주식 현재가 조회 API 추가
+[33m6f161fe[m feat: Stock 현재가 조회 service 추가
+[33mb348d59[m feat: KIS 현재가 조회 Client 추가
+[33m252b245[m Merge pull request #10 from mini0-0/feature/stock-price
+[33mf5ce603[m refator: DomesticStockMasterItem으로 이름 변경
+[33m284fad8[m test: 조회 인기 종목 랭킹 테스트 추가
+[33m22b7f63[m feat: 조회 인기 랭킹 API Controller 추가
+[33m6d71b06[m feat: 조회 인기 종목 랭킹 서비스 구현
+[33m5a7783f[m feat: KIS HTS조회 상위 20종목 API 클라이언트 구현
+[33m0caf876[m feat: KIS HTS조회 상위 20종목 API 응답 DTO 추가
+[33m2dcc2da[m Merge pull request #9 from mini0-0/feature/stock-price
+[33ma196ece[m feat: Error 추가
+[33m2438c37[m refactor: StockPriceDaily 중복 필터링 흐름 개선 및 다중 저장 구현
+[33m3d7f667[m feat: KIS 접근 토큰 재사용 및 Stock 다중 동기화
+[33me70581b[m Merge pull request #8 from mini0-0/feature/stock-price
+[33m250c216[m feat: 국내주식 마스터 종목 DTO 추가
+[33md2903a1[m feat: KIS accessToken 재사용 기능 추가
+[33m93c6cad[m feat: KIS 국내주식 마스터 파일 기반 종목코드 수집 기능 추가
+[33m70afcb9[m feat: 한국투자증권 국내주식 전체 종목 API 동기화 API 추가
+[33mfe5e795[m Merge pull request #7 from mini0-0/feature/stock-price
+[33m470a515[m refator: 테스트 메서드명 형식 정리
+[33m4f5c1d8[m refator: 파일 위치변경 및 테스트면 변경
+[33mda2390e[m feat: StockInfo 동기화 실패 응답 처리 추가
+[33m77566e6[m test: StockInfo 실제 저장 통합 테스트 추가
+[33mc2e4ba2[m Merge pull request #6 from mini0-0/feature/stock-price
+[33mda939cf[m test: StockPriceSyncService 테스트 추가
+[33md16f6ad[m refactor: KIS DTO 패키지 구조 분리
+[33m9298b23[m feat: 종목 정보 동기화 Service 구현
+[33m1d45a67[m feat: 한국투자 종목 정보 API Client 추가
+[33m110cb06[m feat: Stock 엔티티 수정 및 StockRepository 생성
+[33m43c0b51[m test: KIS 토큰 발급 테스트명 변경
+[33mc055b2a[m feat: 일별 시세 동기화 서비스 추가
+[33m21f71cd[m feat: 한국투자증권 일별 시세 API 연동
+[33m070f59a[m feat: 주식 및 일별 시세 도메인 추가
+[33mc7f0592[m chore: spring-boot-configuration-processor 의존성 추가
+[33m3ac82cc[m refactor: AuthServiceTest 구조 정리
+[33m5224ec4[m refactor: Auth 모듈에서 Account로 로직 분리
+[33mc9e5189[m test: KIS 토큰 발급 Client 테스트 추가
+[33mf86a89f[m feat: 한국투자증권 API 토큰 발급 Client 구현
+[33m26ff48a[m chore: 한국투자증권 API 설정 추가
+[33md48f0f5[m feat: 한국투자증권 API token 요청 및 응답 DTO
+[33me2aa4cb[m feat: Stock, StockPriceDaily 엔티티 추가
+[33mb63003e[m Merge pull request #5 from mini0-0/feature/account
+[33ma5d2d31[m[33m ([m[1;31morigin/feature/account[m[33m, [m[1;32mfeature/account[m[33m)[m feat: 회원가입 시 가상계좌 생성 테스트 추가
+[33mbb611f6[m feat: 회원가입 시 기본 가상계좌 생성
+[33m8d1d45d[m feat: 가상계좌(Account) 도메인 추가
+[33mb338607[m Merge pull request #4 from mini0-0/feature/user-login-signup
+[33mf12ac5f[m[33m ([m[1;31morigin/feature/user-login-signup[m[33m, [m[1;32mfeature/user-login-signup[m[33m)[m refactor: JPA Auditing 수정
+[33m204ab80[m feat: 로그인 service, controller 테스트 추가
+[33m224fede[m feat: 로그인 API 추가
+[33me1dc082[m feat: 로그인 서비스 구현
+[33m6d2e1b9[m fix: User에 unique추가
+[33md9ac35a[m Merge pull request #3 from mini0-0/feature/user-login-signup
+[33m04708e4[m feat: UserService 생성
+[33m68296e5[m feat: gralde 환경 설정
+[33m3b8ebbc[m feat: 회원가입 Service, Controller 테스트 추가
+[33mc303614[m feat: 회원가입 API와 Service구현
+[33m52e06fe[m feat: 공통 응답과 예외 처리
+[33m0506264[m feat: User, Repository 추가
+[33me0c55c1[m[33m ([m[1;32mfeature/set-up[m[33m)[m fix : multi module 이름 변경
+[33md9a93f9[m Merge pull request #2 from mini0-0/feature/global-common
+[33mbada5b6[m[33m ([m[1;31morigin/feature/global-common[m[33m, [m[1;32mfeature/global-common[m[33m)[m feat: BaseTimeEntitiy 생성
+[33m4131a22[m fix: gradle 의존성 문제
+[33me66fb86[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m Fix README.md by resolving merge conflicts
+[33m1d46f04[m fix:  프로젝트 멀티모듈 생성
+[33m172bbbe[m[33m ([m[1;31morigin/feature/setup-from-main[m[33m)[m Merge branch 'feature/set-up' into dev
+[33mcc16907[m chore: 프로젝트 멀티모듈 생성
+[33md8b7730[m chore: 프로젝트 초기생성
+[33m84636ce[m chore: 프로젝트 초기 생성
+[33m1e21ad9[m Initial commit
