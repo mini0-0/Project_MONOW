@@ -11,6 +11,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -20,6 +24,8 @@ import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class StockSearchQueryServiceTest {
+
+    private final Pageable pageable = PageRequest.of(0, 10);
 
     @Mock
     private StockRepository stockRepository;
@@ -61,27 +67,30 @@ class StockSearchQueryServiceTest {
                     true
             );
 
-            List<StockSearchQueryResult> searchResults =
-                    List.of(firstStock, secondStock);
+            List<StockSearchQueryResult> searchResults = List.of(firstStock, secondStock);
 
-            given(stockRepository.searchByKeyword(keyword))
-                    .willReturn(searchResults);
+            Page<StockSearchQueryResult> searchResultPage =
+                    new PageImpl<>(
+                        searchResults,
+                        pageable,
+                        searchResults.size()
+            );
+
+            given(stockRepository.searchByKeyword(keyword, pageable))
+                    .willReturn(searchResultPage);
 
             // When
-            List<StockSearchResponse> results = stockSearchQueryService.searchStocks(keyword);
+            Page<StockSearchResponse> results = stockSearchQueryService.searchStocks(keyword, pageable);
 
             // Then
             assertThat(results).hasSize(2);
 
-            assertThat(results.get(0).stockCode()).isEqualTo(firstStockCode);
-            assertThat(results.get(0).stockName()).isEqualTo(firstStockName);
-            assertThat(results.get(0).marketType()).isEqualTo(marketType);
+            assertThat(results.getContent().get(0).stockCode()).isEqualTo(firstStockCode);
+            assertThat(results.getContent().get(0).stockName()).isEqualTo(firstStockName);
+            assertThat(results.getContent().get(0).marketType()).isEqualTo(marketType);
+            assertThat(results.getContent().get(1).stockCode()).isEqualTo(secondStockCode);
 
-            assertThat(results.get(1).stockCode()).isEqualTo(secondStockCode);
-            assertThat(results.get(1).stockName()).isEqualTo(secondStockName);
-            assertThat(results.get(1).marketType()).isEqualTo(marketType);
-
-            verify(stockRepository).searchByKeyword(keyword);
+            verify(stockRepository).searchByKeyword(keyword, pageable);
         }
 
         @Test
@@ -90,16 +99,23 @@ class StockSearchQueryServiceTest {
             // Given
             String keyword = "없는종목";
 
-            given(stockRepository.searchByKeyword(keyword))
-                    .willReturn(List.of());
+            Page<StockSearchQueryResult> emptyPage =
+                    new PageImpl<>(
+                            List.of(),
+                            pageable,
+                            0
+                    );
+
+            given(stockRepository.searchByKeyword(keyword, pageable))
+                    .willReturn(emptyPage);
 
             // When
-            List<StockSearchResponse> results = stockSearchQueryService.searchStocks(keyword);
+            Page<StockSearchResponse> results = stockSearchQueryService.searchStocks(keyword, pageable);
 
             // Then
             assertThat(results).isEmpty();
 
-            verify(stockRepository).searchByKeyword(keyword);
+            verify(stockRepository).searchByKeyword(keyword, pageable);
         }
     }
 }

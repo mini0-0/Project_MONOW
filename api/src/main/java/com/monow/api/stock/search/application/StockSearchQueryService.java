@@ -4,6 +4,8 @@ import com.monow.api.stock.search.dto.response.StockSearchResponse;
 import com.monow.domain.stock.repository.StockRepository;
 import com.monow.domain.stock.repository.StockSearchQueryResult;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -14,13 +16,11 @@ public class StockSearchQueryService {
 
     private final StockRepository stockRepository;
 
-    public List<StockSearchResponse> searchStocks(String keyword) {
+    public Page<StockSearchResponse> searchStocks(String keyword, Pageable pageable) {
 
-        List<StockSearchQueryResult> searchResults = stockRepository.searchByKeyword(keyword);
+        Page<StockSearchQueryResult> searchResults = stockRepository.searchByKeyword(keyword, pageable);
 
-        List<StockSearchResponse> responses = searchResults.stream()
-                                                .map(StockSearchResponse::from)
-                                                .toList();
+        Page<StockSearchResponse> responses = searchResults.map(StockSearchResponse::from);
 
         return responses;
 
