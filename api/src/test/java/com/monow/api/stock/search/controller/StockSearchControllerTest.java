@@ -9,6 +9,10 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -22,6 +26,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(StockSearchController.class)
 class StockSearchControllerTest {
+
+    private final Pageable pageable = PageRequest.of(0, 10);
 
     @Autowired
     private MockMvc mockMvc;
@@ -53,20 +59,30 @@ class StockSearchControllerTest {
             );
 
 
-            given(stockSearchQueryService.searchStocks(keyword))
-                    .willReturn(List.of(response1, response2));
+            Page<StockSearchResponse> responses = new PageImpl<>(
+                    List.of(response1, response2),
+                    pageable,
+                    2
+            );
+
+            given(stockSearchQueryService.searchStocks(keyword, pageable))
+                    .willReturn(responses);
 
             // When & Then
             mockMvc.perform(get("/api/v1/stocks/search")
                     .param("keyword",keyword))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.data.length()").value(2))
-                    .andExpect(jsonPath("$.data[0].stockCode").value("005930"))
-                    .andExpect(jsonPath("$.data[0].stockName").value("삼성전자"))
-                    .andExpect(jsonPath("$.data[1].stockCode").value("009150"))
-                    .andExpect(jsonPath("$.data[1].stockName").value("삼성전기"));
+                    .andExpect(jsonPath("$.data.content.length()").value(2))
+                    .andExpect(jsonPath("$.data.content[0].stockCode").value("005930"))
+                    .andExpect(jsonPath("$.data.content[0].stockName").value("삼성전자"))
+                    .andExpect(jsonPath("$.data.content[1].stockCode").value("009150"))
+                    .andExpect(jsonPath("$.data.content[1].stockName").value("삼성전기"))
+                    .andExpect(jsonPath("$.data.totalElements").value(2))
+                    .andExpect(jsonPath("$.data.totalPages").value(1))
+                    .andExpect(jsonPath("$.data.size").value(10))
+                    .andExpect(jsonPath("$.data.number").value(0));
 
-            verify(stockSearchQueryService).searchStocks(keyword);
+            verify(stockSearchQueryService).searchStocks(keyword, pageable);
         }
     }
 
