@@ -22,11 +22,11 @@ public class StockTradingController {
 
         switch (request.orderType()) {
             case BUY ->
-                    stockTradingService.buyStock(request.userId(), request.stockCode(), request.marketType(), request.quantity());
+                    stockTradingService.buyStock(request.userId(), request.stockCode(), request.quantity());
 
 
             case SELL ->
-                    stockTradingService.sellStock(request.userId(), request.stockCode(), request.marketType(), request.quantity());
+                    stockTradingService.sellStock(request.userId(), request.stockCode(), request.quantity());
         }
 
         return ApiResponse.success();
