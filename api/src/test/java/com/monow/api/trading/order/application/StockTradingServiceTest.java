@@ -1,9 +1,7 @@
-package com.monow.api.trading.application;
+package com.monow.api.trading.order.application;
 
 import com.monow.api.external.kis.type.CurrentPriceMarketType;
-import com.monow.api.stock.realtime.application.StockRealtimePriceCacheService;
 import com.monow.api.stock.realtime.dto.response.StockRealtimePriceResponse;
-import com.monow.api.trading.order.application.StockTradingService;
 import com.monow.domain.account.entity.Account;
 import com.monow.domain.account.repository.AccountRepository;
 import com.monow.domain.holding.entity.Holding;
@@ -67,11 +65,12 @@ class StockTradingServiceTest {
     @Mock
     private HoldingRepository holdingRepository;
 
-    @Mock
-    private StockRealtimePriceCacheService stockRealtimePriceCacheService;
-
     @InjectMocks
     private StockTradingService stockTradingService;
+
+    @Mock
+    private StockOrderPriceService stockOrderPriceService;
+
 
     @Nested
     @DisplayName("주식 매수")
@@ -107,19 +106,18 @@ class StockTradingServiceTest {
             User user = createUser();
             Account account = createAccount(user, SEED_MONEY);
             Stock stock = createStock();
-            StockRealtimePriceResponse response = createRealtimePriceResponse(currentPrice);
 
             given(accountRepository.findByUserId(USER_ID))
                     .willReturn(Optional.of(account));
             given(stockRepository.findByStockCode(STOCK_CODE))
                     .willReturn(Optional.of(stock));
-            given(stockRealtimePriceCacheService.findLatestPrice(MARKET_TYPE, STOCK_CODE))
-                    .willReturn(response);
+            given(stockOrderPriceService.getOrderPrice(STOCK_CODE))
+                    .willReturn(new StockOrderPriceService.StockOrderPrice(MARKET_TYPE, currentPrice));
             given(holdingRepository.findByAccountAndStock(account, stock))
                     .willReturn(Optional.empty());
 
             // When
-            stockTradingService.buyStock(USER_ID, STOCK_CODE, MARKET_TYPE, quantity);
+            stockTradingService.buyStock(USER_ID, STOCK_CODE, quantity);
 
             // Then
             assertThat(account.getBalance()).isEqualByComparingTo(expectedBalance);
@@ -150,6 +148,7 @@ class StockTradingServiceTest {
             verify(transactionHistoryRepository).save(transactionCaptor.capture());
 
             TransactionHistory savedTransaction = transactionCaptor.getValue();
+
             assertThat(savedTransaction.getAmount()).isEqualByComparingTo(totalAmount);
             assertThat(savedTransaction.getBeforeBalance()).isEqualByComparingTo(SEED_MONEY);
             assertThat(savedTransaction.getAfterBalance()).isEqualByComparingTo(expectedBalance);
@@ -204,13 +203,13 @@ class StockTradingServiceTest {
                     .willReturn(Optional.of(account));
             given(stockRepository.findByStockCode(STOCK_CODE))
                     .willReturn(Optional.of(stock));
-            given(stockRealtimePriceCacheService.findLatestPrice(MARKET_TYPE, STOCK_CODE))
-                    .willReturn(createRealtimePriceResponse(currentPrice));
+            given(stockOrderPriceService.getOrderPrice(STOCK_CODE))
+                    .willReturn(new StockOrderPriceService.StockOrderPrice(MARKET_TYPE, currentPrice));
             given(holdingRepository.findByAccountAndStock(account, stock))
                     .willReturn(Optional.of(holding));
 
             // When
-            stockTradingService.buyStock(USER_ID, STOCK_CODE, MARKET_TYPE, addQuantity);
+            stockTradingService.buyStock(USER_ID, STOCK_CODE, addQuantity);
 
             // Then
             assertThat(account.getBalance()).isEqualByComparingTo(expectedBalance);
@@ -270,13 +269,13 @@ class StockTradingServiceTest {
                     .willReturn(Optional.of(account));
             given(stockRepository.findByStockCode(STOCK_CODE))
                     .willReturn(Optional.of(stock));
-            given(stockRealtimePriceCacheService.findLatestPrice(MARKET_TYPE, STOCK_CODE))
-                    .willReturn(createRealtimePriceResponse(currentPrice));
+            given(stockOrderPriceService.getOrderPrice(STOCK_CODE))
+                    .willReturn(new StockOrderPriceService.StockOrderPrice(MARKET_TYPE, currentPrice));
             given(holdingRepository.findByAccountAndStock(account, stock))
                     .willReturn(Optional.empty());
 
             // When
-            stockTradingService.buyStock(USER_ID, STOCK_CODE, MARKET_TYPE, quantity);
+            stockTradingService.buyStock(USER_ID, STOCK_CODE, quantity);
 
             // Then
             assertThat(account.getBalance()).isEqualByComparingTo(BigDecimal.ZERO);
@@ -307,62 +306,17 @@ class StockTradingServiceTest {
         void GivenInvalidQuantity_WhenBuyStock_ThenThrowException(int quantity) {
             // When & Then
             assertThatThrownBy(() ->
-                    stockTradingService.buyStock(USER_ID, STOCK_CODE, MARKET_TYPE, quantity))
+                    stockTradingService.buyStock(USER_ID, STOCK_CODE, quantity))
                     .isInstanceOf(BusinessException.class);
 
             verify(accountRepository, never()).findByUserId(any());
             verify(stockRepository, never()).findByStockCode(any());
-            verify(stockRealtimePriceCacheService, never()).findLatestPrice(any(), any());
+            verify(stockOrderPriceService, never()).getOrderPrice(any());
             verify(holdingRepository, never()).findByAccountAndStock(any(), any());
             verify(orderRepository, never()).save(any(Order.class));
             verify(transactionHistoryRepository, never()).save(any(TransactionHistory.class));
         }
 
-        /*
-         * 테스트 시나리오
-         * Redis에서 조회한 실시간 현재가가 0 또는 음수인 경우
-         *
-         * 실행 흐름
-         * 계좌 조회
-         * 종목 조회
-         * 실시간 현재가 조회
-         * 현재가 유효성 검증 실패
-         *
-         * 검증 대상
-         * BusinessException 발생
-         * 계좌 잔액 불변
-         * 보유 종목 및 주문 저장 미실행
-         */
-        @ParameterizedTest
-        @ValueSource(longs = {0L, -1L})
-        @DisplayName("[실패] - 현재가가 0 이하인 경우 예외 발생")
-        void GivenInvalidCurrentPrice_WhenBuyStock_ThenThrowException(long invalidCurrentPrice) {
-            // Given
-            int quantity = 5;
-            BigDecimal currentPrice = BigDecimal.valueOf(invalidCurrentPrice);
-
-            User user = createUser();
-            Account account = createAccount(user, SEED_MONEY);
-            Stock stock = createStock();
-
-            given(accountRepository.findByUserId(USER_ID))
-                    .willReturn(Optional.of(account));
-            given(stockRepository.findByStockCode(STOCK_CODE))
-                    .willReturn(Optional.of(stock));
-            given(stockRealtimePriceCacheService.findLatestPrice(MARKET_TYPE, STOCK_CODE))
-                    .willReturn(createRealtimePriceResponse(currentPrice));
-
-            // When & Then
-            assertThatThrownBy(() ->
-                    stockTradingService.buyStock(USER_ID, STOCK_CODE, MARKET_TYPE, quantity))
-                    .isInstanceOf(BusinessException.class);
-
-            assertThat(account.getBalance()).isEqualByComparingTo(SEED_MONEY);
-
-            verify(holdingRepository, never()).findByAccountAndStock(any(), any());
-            verify(orderRepository, never()).save(any(Order.class));
-            verify(transactionHistoryRepository, never()).save(any(TransactionHistory.class));
-        }
 
         /*
          * 테스트 시나리오
@@ -391,12 +345,12 @@ class StockTradingServiceTest {
                     .willReturn(Optional.of(account));
             given(stockRepository.findByStockCode(STOCK_CODE))
                     .willReturn(Optional.of(stock));
-            given(stockRealtimePriceCacheService.findLatestPrice(MARKET_TYPE, STOCK_CODE))
-                    .willReturn(createRealtimePriceResponse(currentPrice));
+            given(stockOrderPriceService.getOrderPrice(STOCK_CODE))
+                    .willReturn(new StockOrderPriceService.StockOrderPrice(MARKET_TYPE, currentPrice));
 
             // When & Then
             assertThatThrownBy(() ->
-                    stockTradingService.buyStock(USER_ID, STOCK_CODE, MARKET_TYPE, quantity))
+                    stockTradingService.buyStock(USER_ID, STOCK_CODE, quantity))
                     .isInstanceOf(BusinessException.class);
 
             assertThat(account.getBalance()).isEqualByComparingTo(SEED_MONEY);
@@ -408,20 +362,21 @@ class StockTradingServiceTest {
 
         /*
          * 테스트 시나리오
-         * Redis에 해당 종목의 실시간 현재가가 없는 경우
+         * Redis와 KIS REST 등을 통한 주문 가격 확보가 최종적으로 실패한 경우
          *
          * 실행 흐름
          * 계좌 조회
          * 종목 조회
-         * Redis 현재가 조회 과정에서 예외 발생
+         * StockOrderPriceService에서 주문 가격 조회 실패
          *
          * 검증 대상
+         * BusinessException 발생
          * 계좌 잔액 불변
          * Holding, Order, TransactionHistory 처리 미실행
          */
         @Test
-        @DisplayName("[실패] - 실시간 현재가 조회에 실패한 경우 예외 발생")
-        void GivenRealtimePriceNotFound_WhenBuyStock_ThenThrowException() {
+        @DisplayName("[실패] - 주문 가격 조회에 실패한 경우 거래 처리 미실행")
+        void GivenOrderPriceLookupFailed_WhenBuyStock_ThenThrowException() {
             // Given
             int quantity = 5;
 
@@ -433,12 +388,12 @@ class StockTradingServiceTest {
                     .willReturn(Optional.of(account));
             given(stockRepository.findByStockCode(STOCK_CODE))
                     .willReturn(Optional.of(stock));
-            given(stockRealtimePriceCacheService.findLatestPrice(MARKET_TYPE, STOCK_CODE))
+            given(stockOrderPriceService.getOrderPrice(STOCK_CODE))
                     .willThrow(new BusinessException(ErrorCode.REALTIME_STOCK_PRICE_NOT_FOUND));
 
             // When & Then
             assertThatThrownBy(() ->
-                    stockTradingService.buyStock(USER_ID, STOCK_CODE, MARKET_TYPE, quantity))
+                    stockTradingService.buyStock(USER_ID, STOCK_CODE, quantity))
                     .isInstanceOf(BusinessException.class);
 
             assertThat(account.getBalance()).isEqualByComparingTo(SEED_MONEY);
@@ -500,13 +455,13 @@ class StockTradingServiceTest {
                     .willReturn(Optional.of(account));
             given(stockRepository.findByStockCode(STOCK_CODE))
                     .willReturn(Optional.of(stock));
-            given(stockRealtimePriceCacheService.findLatestPrice(MARKET_TYPE, STOCK_CODE))
-                    .willReturn(createRealtimePriceResponse(currentPrice));
+            given(stockOrderPriceService.getOrderPrice(STOCK_CODE))
+                    .willReturn(new StockOrderPriceService.StockOrderPrice(MARKET_TYPE, currentPrice));
             given(holdingRepository.findByAccountAndStock(account, stock))
                     .willReturn(Optional.of(holding));
 
             // When
-            stockTradingService.sellStock(USER_ID, STOCK_CODE, MARKET_TYPE, sellQuantity);
+            stockTradingService.sellStock(USER_ID, STOCK_CODE, sellQuantity);
 
             // Then
             assertThat(account.getBalance()).isEqualByComparingTo(expectedBalance);
@@ -551,12 +506,12 @@ class StockTradingServiceTest {
         void GivenInvalidQuantity_WhenSellStock_ThenThrowException(int quantity) {
             // When & Then
             assertThatThrownBy(() ->
-                    stockTradingService.sellStock(USER_ID, STOCK_CODE, MARKET_TYPE, quantity))
+                    stockTradingService.sellStock(USER_ID, STOCK_CODE, quantity))
                     .isInstanceOf(BusinessException.class);
 
             verify(accountRepository, never()).findByUserId(any());
             verify(stockRepository, never()).findByStockCode(any());
-            verify(stockRealtimePriceCacheService, never()).findLatestPrice(any(), any());
+            verify(stockOrderPriceService, never()).getOrderPrice(any());
             verify(holdingRepository, never()).findByAccountAndStock(any(), any());
             verify(orderRepository, never()).save(any(Order.class));
             verify(transactionHistoryRepository, never()).save(any(TransactionHistory.class));
@@ -581,6 +536,7 @@ class StockTradingServiceTest {
         void GivenHoldingNotFound_WhenSellStock_ThenThrowException() {
             // Given
             int sellQuantity = 5;
+            BigDecimal currentPrice = BigDecimal.valueOf(360_000);
             BigDecimal beforeBalance = BigDecimal.valueOf(93_500_000);
 
             User user = createUser();
@@ -591,14 +547,14 @@ class StockTradingServiceTest {
                     .willReturn(Optional.of(account));
             given(stockRepository.findByStockCode(STOCK_CODE))
                     .willReturn(Optional.of(stock));
-            given(stockRealtimePriceCacheService.findLatestPrice(MARKET_TYPE, STOCK_CODE))
-                    .willReturn(createRealtimePriceResponse(BigDecimal.valueOf(322_500)));
+            given(stockOrderPriceService.getOrderPrice(STOCK_CODE))
+                    .willReturn(new StockOrderPriceService.StockOrderPrice(MARKET_TYPE, currentPrice));
             given(holdingRepository.findByAccountAndStock(account, stock))
                     .willReturn(Optional.empty());
 
             // When & Then
             assertThatThrownBy(() ->
-                    stockTradingService.sellStock(USER_ID, STOCK_CODE, MARKET_TYPE, sellQuantity))
+                    stockTradingService.sellStock(USER_ID, STOCK_CODE, sellQuantity))
                     .isInstanceOf(BusinessException.class);
 
             assertThat(account.getBalance()).isEqualByComparingTo(beforeBalance);
@@ -627,6 +583,7 @@ class StockTradingServiceTest {
             int existingQuantity = 5;
             int sellQuantity = 10;
 
+            BigDecimal currentPrice = BigDecimal.valueOf(360_000);
             BigDecimal beforeBalance = BigDecimal.valueOf(93_500_000);
             BigDecimal existingTotalPurchaseAmount = BigDecimal.valueOf(1_400_000);
 
@@ -646,14 +603,14 @@ class StockTradingServiceTest {
                     .willReturn(Optional.of(account));
             given(stockRepository.findByStockCode(STOCK_CODE))
                     .willReturn(Optional.of(stock));
-            given(stockRealtimePriceCacheService.findLatestPrice(MARKET_TYPE, STOCK_CODE))
-                    .willReturn(createRealtimePriceResponse(BigDecimal.valueOf(322_500)));
+            given(stockOrderPriceService.getOrderPrice(STOCK_CODE))
+                    .willReturn(new StockOrderPriceService.StockOrderPrice(MARKET_TYPE, currentPrice));
             given(holdingRepository.findByAccountAndStock(account, stock))
                     .willReturn(Optional.of(holding));
 
             // When & Then
             assertThatThrownBy(() ->
-                    stockTradingService.sellStock(USER_ID, STOCK_CODE, MARKET_TYPE, sellQuantity))
+                    stockTradingService.sellStock(USER_ID, STOCK_CODE, sellQuantity))
                     .isInstanceOf(BusinessException.class);
 
             assertThat(holding.getQuantity()).isEqualTo(existingQuantity);

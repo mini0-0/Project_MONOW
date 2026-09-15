@@ -1,8 +1,6 @@
 package com.monow.api.trading.order.application;
 
 import com.monow.api.external.kis.type.CurrentPriceMarketType;
-import com.monow.api.stock.realtime.application.StockRealtimePriceCacheService;
-import com.monow.api.stock.realtime.dto.response.StockRealtimePriceResponse;
 import com.monow.domain.account.entity.Account;
 import com.monow.domain.account.repository.AccountRepository;
 import com.monow.domain.holding.entity.Holding;
@@ -39,13 +37,12 @@ public class StockTradingService {
 
     private final TransactionHistoryRepository transactionHistoryRepository;
 
-    private final StockRealtimePriceCacheService stockRealtimePriceCacheService;
+    private final StockOrderPriceService stockOrderPriceService;
 
     @Transactional
     public void buyStock(
             Long userId,
             String stockCode,
-            CurrentPriceMarketType marketType,
             int quantity
     ) {
         validateQuantity(quantity);
@@ -54,7 +51,11 @@ public class StockTradingService {
         User user = account.getUser();
         Stock stock = getStock(stockCode);
 
-        BigDecimal executionPrice = getExecutionPrice(marketType, stockCode);
+        // 주문 시점 현재가 조회
+        StockOrderPriceService.StockOrderPrice orderPrice = stockOrderPriceService.getOrderPrice(stockCode);
+
+        CurrentPriceMarketType marketType = orderPrice.marketType();
+        BigDecimal executionPrice = orderPrice.price();
 
         OrderMarketType orderMarketType = convertOrderMarketType(marketType);
 
@@ -90,7 +91,6 @@ public class StockTradingService {
     public void sellStock(
             Long userId,
             String stockCode,
-            CurrentPriceMarketType marketType,
             int quantity
     ) {
         validateQuantity(quantity);
@@ -99,7 +99,12 @@ public class StockTradingService {
         User user = account.getUser();
         Stock stock = getStock(stockCode);
 
-        BigDecimal executionPrice = getExecutionPrice(marketType, stockCode);
+        // 주문 시점 현재가 조회
+        StockOrderPriceService.StockOrderPrice orderPrice = stockOrderPriceService.getOrderPrice(stockCode);
+
+        CurrentPriceMarketType marketType = orderPrice.marketType();
+        BigDecimal executionPrice = orderPrice.price();
+
 
         OrderMarketType orderMarketType = convertOrderMarketType(marketType);
 
@@ -144,22 +149,6 @@ public class StockTradingService {
         return stockRepository.findByStockCode(stockCode)
                 .orElseThrow(() -> new BusinessException(ErrorCode.STOCK_NOT_FOUND));
 
-    }
-
-    // 실시간 현재가 조회 및 검증
-    private BigDecimal getExecutionPrice(
-            CurrentPriceMarketType marketType,
-            String stockCode
-    ) {
-        StockRealtimePriceResponse response = stockRealtimePriceCacheService.findLatestPrice(marketType, stockCode);
-
-        BigDecimal executionPrice = response.currentPrice();
-
-        if (executionPrice == null || executionPrice.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new BusinessException(ErrorCode.REALTIME_PRICE_INVALID_RESPONSE);
-        }
-
-        return executionPrice;
     }
 
     private OrderMarketType convertOrderMarketType(
