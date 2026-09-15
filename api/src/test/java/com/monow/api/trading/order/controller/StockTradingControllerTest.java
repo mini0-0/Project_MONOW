@@ -23,6 +23,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(StockTradingController.class)
 class StockTradingControllerTest {
 
+    private static final Long USER_ID = 2L;
+    private static final String STOCK_CODE = "005930";
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -40,13 +43,10 @@ class StockTradingControllerTest {
         @DisplayName("[성공] - 정상적인 주식 매수 요청 시 서비스 호출")
         void buyStock_whenRequestIsValid_callsService() throws Exception {
             // Given
-            Long userId = 2L;
-            String stockCode = "005930";
-            CurrentPriceMarketType marketType = CurrentPriceMarketType.KRX;
             OrderType orderType = OrderType.BUY;
             int quantity = 5;
 
-            StockOrderRequest request = new StockOrderRequest(userId, stockCode, marketType, orderType, quantity);
+            StockOrderRequest request = new StockOrderRequest(USER_ID, STOCK_CODE, orderType, quantity);
 
 
             // When & Then
@@ -56,7 +56,7 @@ class StockTradingControllerTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.success").value(true));
 
-            verify(stockTradingService).buyStock(userId, stockCode, marketType, quantity);
+            verify(stockTradingService).buyStock(USER_ID, STOCK_CODE,quantity);
 
         }
 
@@ -64,13 +64,9 @@ class StockTradingControllerTest {
         @DisplayName("[실패] - 주문 유형이 없는 경우 잘못된 요청 응답")
         void createOrder_whenOrderTypeIsNull_returnsBadRequest() throws Exception {
             // Given
-            Long userId = 2L;
-            String stockCode = "005930";
-            CurrentPriceMarketType marketType = CurrentPriceMarketType.KRX;
-            OrderType orderType = OrderType.BUY;
             int quantity = 5;
 
-            StockOrderRequest request = new StockOrderRequest(userId, stockCode, marketType, null, quantity);
+            StockOrderRequest request = new StockOrderRequest(USER_ID, STOCK_CODE, null, quantity);
 
 
             // When & Then
@@ -91,13 +87,10 @@ class StockTradingControllerTest {
         @DisplayName("[성공] - 정상적인 주식 매도 요청 시 서비스 호출")
         void sellStock_whenRequestIsValid_callsService() throws Exception {
             // Given
-            Long userId = 2L;
-            String stockCode = "005930";
-            CurrentPriceMarketType marketType = CurrentPriceMarketType.KRX;
             OrderType orderType = OrderType.SELL;
             int quantity = 5;
 
-            StockOrderRequest request = new StockOrderRequest(userId, stockCode, marketType, orderType, quantity);
+            StockOrderRequest request = new StockOrderRequest(USER_ID, STOCK_CODE, orderType, quantity);
 
             // When & Then
             mockMvc.perform(post("/api/v1/orders")
@@ -106,7 +99,7 @@ class StockTradingControllerTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.success").value(true));
 
-            verify(stockTradingService).sellStock(userId, stockCode, marketType, quantity);
+            verify(stockTradingService).sellStock(USER_ID, STOCK_CODE, quantity);
 
 
         }
