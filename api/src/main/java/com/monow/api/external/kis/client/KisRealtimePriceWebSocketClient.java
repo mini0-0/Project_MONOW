@@ -2,7 +2,7 @@ package com.monow.api.external.kis.client;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.monow.api.external.kis.config.KisProperties;
+import com.monow.global.external.kis.config.KisProperties;
 import com.monow.api.external.kis.dto.request.KisRealtimePriceRequest;
 import com.monow.api.external.kis.event.KisRealtimeSubscriptionEvent;
 import com.monow.api.external.kis.mapper.KisRealtimePriceParser;

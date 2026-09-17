@@ -2,13 +2,14 @@ package com.monow.api.external.kis.application;
 
 import com.monow.api.external.kis.client.KisStockInfoClient;
 import com.monow.api.external.kis.dto.response.KisStockInfoResponse;
-import com.monow.api.external.kis.dto.response.KisTokenResponse;
+import com.monow.global.external.kis.dto.response.KisTokenResponse;
 import com.monow.api.external.kis.mapper.KisStockInfoMapper;
 import com.monow.domain.stock.entity.DomesticStockMarketType;
 import com.monow.domain.stock.entity.Stock;
 import com.monow.domain.stock.repository.StockRepository;
 import com.monow.global.error.exception.BusinessException;
 import com.monow.global.error.model.ErrorCode;
+import com.monow.global.external.kis.application.KisAccessTokenProvider;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
