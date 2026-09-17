@@ -1,7 +1,8 @@
 package com.monow.api.external.kis.client;
 
-import com.monow.api.external.kis.application.KisAccessTokenProvider;
-import com.monow.api.external.kis.dto.response.KisDailyPriceResponse;
+import com.monow.global.external.kis.application.KisAccessTokenProvider;
+import com.monow.global.external.kis.dto.response.KisDailyPriceResponse;
+import com.monow.global.external.kis.client.KisDailyPriceClient;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

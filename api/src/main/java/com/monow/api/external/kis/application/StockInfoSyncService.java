@@ -8,6 +8,7 @@ import com.monow.domain.stock.entity.Stock;
 import com.monow.domain.stock.repository.StockRepository;
 import com.monow.global.error.exception.BusinessException;
 import com.monow.global.error.model.ErrorCode;
+import com.monow.global.external.kis.application.KisAccessTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

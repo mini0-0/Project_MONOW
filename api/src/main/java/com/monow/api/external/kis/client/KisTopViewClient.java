@@ -1,7 +1,7 @@
 package com.monow.api.external.kis.client;
 
-import com.monow.api.external.kis.application.KisAccessTokenProvider;
-import com.monow.api.external.kis.config.KisProperties;
+import com.monow.global.external.kis.application.KisAccessTokenProvider;
+import com.monow.global.external.kis.config.KisProperties;
 import com.monow.api.external.kis.dto.response.KisTopViewItem;
 import com.monow.api.external.kis.dto.response.KisTopViewResponse;
 import com.monow.global.error.exception.BusinessException;

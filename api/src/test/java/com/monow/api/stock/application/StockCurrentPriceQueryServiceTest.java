@@ -1,6 +1,6 @@
 package com.monow.api.stock.application;
 
-import com.monow.api.external.kis.application.KisAccessTokenProvider;
+import com.monow.global.external.kis.application.KisAccessTokenProvider;
 import com.monow.api.external.kis.client.KisCurrentPriceClient;
 import com.monow.api.external.kis.dto.response.KisCurrentPriceResponse;
 import com.monow.api.external.kis.type.CurrentPriceMarketType;

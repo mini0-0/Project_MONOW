@@ -1,8 +1,11 @@
 package com.monow.api.external.kis.application;
 
-import com.monow.api.external.kis.client.KisTokenClient;
+import com.monow.global.external.kis.client.KisTokenClient;
 
-import com.monow.api.external.kis.dto.response.KisTokenResponse;
+import com.monow.global.external.kis.dto.response.KisTokenResponse;
+import com.monow.global.external.kis.application.KisAccessTokenCacheService;
+import com.monow.global.external.kis.application.KisAccessTokenLockService;
+import com.monow.global.external.kis.application.KisAccessTokenProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
