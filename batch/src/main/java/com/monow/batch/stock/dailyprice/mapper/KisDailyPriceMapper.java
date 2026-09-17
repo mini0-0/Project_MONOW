@@ -1,4 +1,4 @@
-package com.monow.api.external.kis.mapper;
+package com.monow.batch.stock.dailyprice.mapper;
 
 import com.monow.global.external.kis.dto.response.KisDailyPriceResponse;
 import com.monow.domain.stock.entity.Stock;
@@ -24,7 +24,7 @@ public class KisDailyPriceMapper {
         BigDecimal highPrice = new BigDecimal(output.highPrice());
         BigDecimal lowPrice = new BigDecimal(output.lowPrice());
         BigDecimal closePrice = new BigDecimal(output.closePrice());
-        Long volume = Long.parseLong(output.openPrice());
+        Long volume = Long.parseLong(output.volume());
 
         return StockPriceDaily.createDailyPrice(
                 stock,
