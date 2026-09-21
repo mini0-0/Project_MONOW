@@ -14,6 +14,7 @@ import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.support.ListItemReader;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -23,6 +24,7 @@ import java.util.List;
 @Configuration
 @RequiredArgsConstructor
 public class DailyStockPriceJobConfig {
+    private static final int CHUNK_SIZE = 10;
 
     private final JobRepository jobRepository;
 
@@ -35,7 +37,7 @@ public class DailyStockPriceJobConfig {
     private final DailyStockPriceWriter dailyStockPriceWriter;
 
     @Bean
-    public Job dailyStockPriceJob(Step dailyStockPriceStep) {
+    public Job dailyStockPriceJob(@Qualifier("dailyStockPriceStep") Step dailyStockPriceStep) {
 
         return new JobBuilder("dailyStockPriceJob", jobRepository)
                 .start(dailyStockPriceStep)
@@ -44,10 +46,10 @@ public class DailyStockPriceJobConfig {
     }
 
     @Bean
-    public Step dailyStockPriceStep(ItemReader<Stock> dailyStockPriceReader) {
+    public Step dailyStockPriceStep( @Qualifier("dailyStockPriceReader") ItemReader<Stock> dailyStockPriceReader) {
 
         return new StepBuilder("dailyStockPriceStep", jobRepository)
-                .<Stock, List<StockPriceDaily>>chunk(10, transactionManager)
+                .<Stock, List<StockPriceDaily>>chunk(CHUNK_SIZE, transactionManager)
                 .reader(dailyStockPriceReader)
                 .processor(dailyStockPriceProcessor)
                 .writer(dailyStockPriceWriter)
