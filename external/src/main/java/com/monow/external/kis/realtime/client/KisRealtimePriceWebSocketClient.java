@@ -1,15 +1,27 @@
-package com.monow.external.kis.client;
+package com.monow.external.kis.realtime.client;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.monow.external.kis.config.KisProperties;
-import com.monow.external.kis.mapper.KisRealtimePriceParser;
+import com.monow.external.kis.realtime.dto.request.KisRealtimePriceRequest;
+import com.monow.external.kis.realtime.event.KisRealtimePriceReceivedEvent;
+import com.monow.external.kis.realtime.event.KisRealtimeSubscriptionEvent;
+import com.monow.external.kis.realtime.event.KisWebSocketConnectionEvent;
+import com.monow.external.kis.realtime.model.KisRealtimePriceData;
+import com.monow.external.kis.realtime.parser.KisRealtimePriceParser;
+import com.monow.external.kis.type.CurrentPriceMarketType;
 import com.monow.global.error.exception.BusinessException;
 import com.monow.global.error.model.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
+import org.springframework.web.socket.CloseStatus;
+import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
+import org.springframework.web.socket.client.WebSocketClient;
+import org.springframework.web.socket.client.standard.StandardWebSocketClient;
+import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 
 import java.io.IOException;
@@ -34,8 +46,6 @@ public class KisRealtimePriceWebSocketClient {
     private final KisWebSocketApprovalKeyClient kisWebSocketApprovalKeyClient;
 
     private final KisRealtimePriceParser kisRealtimePriceParser;
-
-    private final StockRealtimePriceHandler stockRealtimePriceHandler;
 
     private final ApplicationEventPublisher applicationEventPublisher;
 
@@ -189,23 +199,19 @@ public class KisRealtimePriceWebSocketClient {
             return;
         }
 
-        StockRealtimePriceResponse response = kisRealtimePriceParser.parse(rawData);
+        KisRealtimePriceData data = kisRealtimePriceParser.parse(rawData);
 
-        if (response == null) {
+        if (data == null) {
             return;
         }
 
-        stockRealtimePriceHandler.handleRealtimePrice(
-                response.marketType(),
-                response.stockCode(),
-                response
-        );
+        applicationEventPublisher.publishEvent(new KisRealtimePriceReceivedEvent(data));
 
         log.info(
                 "KIS 실시간 현재가 처리 완료 - stockCode={}, currentPrice={}, tradeTime={}",
-                response.stockCode(),
-                response.currentPrice(),
-                response.tradeTime()
+                data.stockCode(),
+                data.currentPrice(),
+                data.tradeTime()
         );
 
     }

@@ -1,5 +1,6 @@
-package com.monow.external.kis.mapper;
+package com.monow.external.kis.realtime.parser;
 
+import com.monow.external.kis.realtime.model.KisRealtimePriceData;
 import com.monow.external.kis.type.CurrentPriceMarketType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +28,7 @@ public class KisRealtimePriceParser {
     /**
      * KIS에서 수신한 실시간 현재가 데이터를 파싱하고 내부 처리 Service로 전달
      */
-    public StockRealtimePriceResponse parse(String rawData) {
+    public KisRealtimePriceData parse(String rawData) {
         if (rawData == null || rawData.isBlank()) {
             throw invalidRealtimeDataException();
         }
@@ -87,12 +88,12 @@ public class KisRealtimePriceParser {
             throw invalidRealtimeDataException();
         }
 
-        return convertToRealtimeResponse(marketType, fields);
+        return convertToRealtimeData(marketType, fields);
     }
 
-    private StockRealtimePriceResponse convertToRealtimeResponse(CurrentPriceMarketType marketType, String[] fields) {
+    private KisRealtimePriceData convertToRealtimeData(CurrentPriceMarketType marketType, String[] fields) {
         try {
-            return new StockRealtimePriceResponse(
+            return new KisRealtimePriceData(
                     marketType,
                     fields[0],
                     new BigDecimal(fields[2]),
