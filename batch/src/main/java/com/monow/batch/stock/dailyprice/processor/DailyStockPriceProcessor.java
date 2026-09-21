@@ -4,11 +4,12 @@ import com.monow.batch.stock.dailyprice.mapper.KisDailyPriceMapper;
 import com.monow.domain.stock.entity.Stock;
 import com.monow.domain.stock.entity.StockPriceDaily;
 import com.monow.domain.stock.repository.StockPriceDailyRepository;
+import com.monow.external.kis.auth.application.KisAccessTokenProvider;
+import com.monow.external.kis.stock.client.KisDailyPriceClient;
+import com.monow.external.kis.stock.dto.response.KisDailyPriceResponse;
 import com.monow.global.error.exception.BusinessException;
 import com.monow.global.error.model.ErrorCode;
-import com.monow.global.external.kis.application.KisAccessTokenProvider;
-import com.monow.global.external.kis.client.KisDailyPriceClient;
-import com.monow.global.external.kis.dto.response.KisDailyPriceResponse;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.stereotype.Component;

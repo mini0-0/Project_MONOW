@@ -1,6 +1,6 @@
 package com.monow.api.stock.application;
 
-import com.monow.api.external.kis.type.CurrentPriceMarketType;
+import com.monow.external.kis.type.CurrentPriceMarketType;
 import com.monow.api.stock.realtime.application.StockRealtimePriceCacheService;
 import com.monow.api.stock.realtime.dto.response.StockRealtimePriceResponse;
 import org.junit.jupiter.api.DisplayName;

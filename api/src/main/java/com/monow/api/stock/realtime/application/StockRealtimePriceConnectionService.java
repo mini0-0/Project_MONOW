@@ -1,11 +1,11 @@
 package com.monow.api.stock.realtime.application;
 
-import com.monow.api.external.kis.client.KisRealtimePriceWebSocketClient;
-import com.monow.api.external.kis.event.KisRealtimeSubscriptionEvent;
-import com.monow.api.external.kis.event.KisWebSocketConnectionEvent;
-import com.monow.api.external.kis.type.CurrentPriceMarketType;
 import com.monow.api.stock.currentprice.application.StockCurrentPriceMarketSelection;
 import com.monow.api.stock.currentprice.application.StockCurrentPriceMarketSelector;
+import com.monow.external.kis.realtime.client.KisRealtimePriceWebSocketClient;
+import com.monow.external.kis.realtime.event.KisRealtimeSubscriptionEvent;
+import com.monow.external.kis.realtime.event.KisWebSocketConnectionEvent;
+import com.monow.external.kis.type.CurrentPriceMarketType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;

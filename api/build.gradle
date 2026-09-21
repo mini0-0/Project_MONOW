@@ -6,6 +6,7 @@ plugins {
 dependencies {
 	implementation project(':domain')
 	implementation project(':global')
+	implementation project(':external')
 
 	// Web
 	implementation 'org.springframework.boot:spring-boot-starter-web'
@@ -14,7 +15,8 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
 
-	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 
 
 	runtimeOnly 'org.postgresql:postgresql'

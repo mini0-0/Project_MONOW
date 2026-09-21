@@ -1,8 +1,8 @@
 package com.monow.batch.stock.dailyprice.mapper;
 
-import com.monow.global.external.kis.dto.response.KisDailyPriceResponse;
 import com.monow.domain.stock.entity.Stock;
 import com.monow.domain.stock.entity.StockPriceDaily;
+import com.monow.external.kis.stock.dto.response.KisDailyPriceResponse;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;

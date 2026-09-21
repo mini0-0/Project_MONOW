@@ -1,6 +1,6 @@
 package com.monow.api.stock.currentprice.application;
 
-import com.monow.api.external.kis.type.CurrentPriceMarketType;
+import com.monow.external.kis.type.CurrentPriceMarketType;
 
 public record StockCurrentPriceMarketSelection(
         CurrentPriceMarketType marketType,

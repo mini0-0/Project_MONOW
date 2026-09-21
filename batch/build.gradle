@@ -5,8 +5,9 @@ plugins {
 
 
 dependencies {
-	implementation project(':domain')
 	implementation project(':global')
+	implementation project(':domain')
+	implementation project(':external')
 
 	implementation 'org.springframework.boot:spring-boot-starter-batch'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'

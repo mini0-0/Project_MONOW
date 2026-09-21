@@ -1,6 +1,7 @@
 package com.monow.api.stock.realtime.dto.response;
 
-import com.monow.api.external.kis.type.CurrentPriceMarketType;
+import com.monow.external.kis.realtime.model.KisRealtimePriceData;
+import com.monow.external.kis.type.CurrentPriceMarketType;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -21,4 +22,22 @@ public record StockRealtimePriceResponse(
         LocalTime tradeTime,
         LocalDateTime updatedAt
 ) {
+    public static StockRealtimePriceResponse from(KisRealtimePriceData data) {
+        return new StockRealtimePriceResponse(
+                data.marketType(),
+                data.stockCode(),
+                data.currentPrice(),
+                data.changePrice(),
+                data.changeSign(),
+                data.changeRate(),
+                data.tradeVolume(),
+                data.tradeAmount(),
+                data.openPrice(),
+                data.highPrice(),
+                data.lowPrice(),
+                data.tradeTime(),
+                data.receivedAt()
+        );
+    }
+
 }

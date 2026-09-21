@@ -6,25 +6,22 @@ import com.monow.domain.stock.entity.Stock;
 import com.monow.domain.stock.entity.StockPriceDaily;
 import com.monow.domain.stock.repository.StockPriceDailyRepository;
 import com.monow.domain.stock.repository.StockRepository;
-import com.monow.global.external.kis.application.KisAccessTokenProvider;
-import com.monow.global.external.kis.client.KisDailyPriceClient;
-import com.monow.global.external.kis.dto.response.KisDailyPriceResponse;
+
+import com.monow.external.kis.auth.application.KisAccessTokenProvider;
+import com.monow.external.kis.stock.client.KisDailyPriceClient;
+import com.monow.external.kis.stock.dto.response.KisDailyPriceResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.batch.core.BatchStatus;
-import org.springframework.batch.core.JobExecution;
-import org.springframework.batch.core.JobParameters;
-import org.springframework.batch.core.JobParametersBuilder;
+import org.springframework.batch.core.*;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.batch.test.JobRepositoryTestUtils;
 import org.springframework.batch.test.context.SpringBatchTest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -34,7 +31,6 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-@ExtendWith(SpringExtension.class)
 @SpringBatchTest
 @SpringBootTest(classes = BatchApplication.class)
 @ActiveProfiles("test")
@@ -49,6 +45,10 @@ class DailyStockPriceJobConfigTest {
 
     @Autowired
     private JobRepositoryTestUtils jobRepositoryTestUtils;
+
+    @Autowired
+    @Qualifier("dailyStockPriceJob")
+    private Job dailyStockPriceJob;
 
     @Autowired
     private StockRepository stockRepository;
@@ -68,6 +68,7 @@ class DailyStockPriceJobConfigTest {
         stockRepository.deleteAll();
 
         jobRepositoryTestUtils.removeJobExecutions();
+        jobLauncherTestUtils.setJob(dailyStockPriceJob);
     }
 
     @Test
