@@ -1,9 +1,7 @@
-package com.monow.external.realtime.client;
+package com.monow.external.kis.realtime.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.monow.external.kis.config.KisProperties;
-import com.monow.external.kis.realtime.client.KisRealtimePriceWebSocketClient;
-import com.monow.external.kis.realtime.client.KisWebSocketApprovalKeyClient;
 import com.monow.external.kis.realtime.dto.request.KisRealtimePriceRequest;
 import com.monow.external.kis.realtime.event.KisRealtimePriceReceivedEvent;
 import com.monow.external.kis.realtime.event.KisRealtimeSubscriptionEvent;

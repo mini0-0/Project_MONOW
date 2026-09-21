@@ -1,9 +1,5 @@
 package com.monow.api.stock.application;
 
-import com.monow.global.external.kis.application.KisAccessTokenProvider;
-import com.monow.api.external.kis.client.KisCurrentPriceClient;
-import com.monow.api.external.kis.dto.response.KisCurrentPriceResponse;
-import com.monow.api.external.kis.type.CurrentPriceMarketType;
 import com.monow.api.stock.currentprice.application.StockCurrentPriceMarketSelection;
 import com.monow.api.stock.currentprice.application.StockCurrentPriceMarketSelector;
 import com.monow.api.stock.currentprice.application.StockCurrentPriceQueryService;
@@ -11,6 +7,10 @@ import com.monow.api.stock.currentprice.application.StockMarketStatus;
 import com.monow.api.stock.realtime.dto.StockMetadata;
 import com.monow.api.stock.currentprice.dto.response.StockCurrentPriceResponse;
 import com.monow.api.stock.realtime.application.StockMetadataCacheService;
+import com.monow.external.kis.auth.application.KisAccessTokenProvider;
+import com.monow.external.kis.stock.client.KisCurrentPriceClient;
+import com.monow.external.kis.stock.dto.response.KisCurrentPriceResponse;
+import com.monow.external.kis.type.CurrentPriceMarketType;
 import com.monow.global.error.exception.BusinessException;
 import com.monow.global.error.model.ErrorCode;
 import lombok.extern.slf4j.Slf4j;

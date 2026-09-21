@@ -1,4 +1,4 @@
-package com.monow.external.kis.dto.response;
+package com.monow.external.kis.auth.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

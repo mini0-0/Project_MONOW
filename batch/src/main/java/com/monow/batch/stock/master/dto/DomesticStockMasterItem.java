@@ -1,4 +1,4 @@
-package com.monow.external.kis.stock.dto.response;
+package com.monow.batch.stock.master.dto;
 
 import com.monow.domain.stock.entity.DomesticStockMarketType;
 

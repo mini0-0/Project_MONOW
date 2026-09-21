@@ -1,4 +1,4 @@
-package com.monow.batch.stock.master.mapper;
+package com.monow.external.kis.stock.mapper;
 
 import com.monow.domain.stock.entity.DomesticStockMarketType;
 import com.monow.domain.stock.entity.Stock;

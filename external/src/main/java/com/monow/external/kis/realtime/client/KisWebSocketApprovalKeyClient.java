@@ -1,8 +1,8 @@
-package com.monow.external.kis.client;
+package com.monow.external.kis.realtime.client;
 
 import com.monow.external.kis.config.KisProperties;
-import com.monow.external.kis.dto.request.KisWebSocketApprovalKeyRequest;
-import com.monow.external.kis.dto.response.KisWebSocketApprovalKeyResponse;
+import com.monow.external.kis.realtime.dto.request.KisWebSocketApprovalKeyRequest;
+import com.monow.external.kis.realtime.dto.response.KisWebSocketApprovalKeyResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;

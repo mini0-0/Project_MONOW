@@ -1,4 +1,4 @@
-package com.monow.external.auth.application;
+package com.monow.external.kis.auth.application;
 
 import com.monow.global.external.kis.client.KisTokenClient;
 

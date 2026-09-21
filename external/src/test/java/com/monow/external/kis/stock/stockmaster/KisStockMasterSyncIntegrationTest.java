@@ -1,4 +1,4 @@
-package test.java.com.monow.external.stockmaster;
+package com.monow.external.kis.stock.stockmaster;
 
 import com.monow.domain.stock.entity.DomesticStockMarketType;
 import com.monow.global.external.kis.stockmaster.KisStockMasterDownloader;

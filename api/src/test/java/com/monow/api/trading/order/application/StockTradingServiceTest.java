@@ -1,6 +1,6 @@
 package com.monow.api.trading.order.application;
 
-import com.monow.api.external.kis.type.CurrentPriceMarketType;
+import com.monow.external.kis.type.CurrentPriceMarketType;
 import com.monow.api.stock.realtime.dto.response.StockRealtimePriceResponse;
 import com.monow.domain.account.entity.Account;
 import com.monow.domain.account.repository.AccountRepository;

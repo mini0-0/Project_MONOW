@@ -1,7 +1,7 @@
 package com.monow.api.stock.realtime.application;
 
-import com.monow.api.external.kis.type.CurrentPriceMarketType;
 import com.monow.api.stock.realtime.dto.response.StockRealtimePriceResponse;
+import com.monow.external.kis.type.CurrentPriceMarketType;
 import com.monow.global.error.exception.BusinessException;
 import com.monow.global.error.model.ErrorCode;
 import lombok.RequiredArgsConstructor;

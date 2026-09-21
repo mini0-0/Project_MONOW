@@ -1,7 +1,7 @@
 package com.monow.api.stock.currentprice.dto.response;
 
-import com.monow.api.external.kis.type.CurrentPriceMarketType;
 import com.monow.api.stock.currentprice.application.StockMarketStatus;
+import com.monow.external.kis.type.CurrentPriceMarketType;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

@@ -1,4 +1,4 @@
-package com.monow.global.external.kis.config;
+package com.monow.external.kis.config;
 
 import lombok.Getter;
 import lombok.Setter;

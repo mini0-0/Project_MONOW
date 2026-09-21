@@ -1,7 +1,7 @@
-package com.monow.external.kis.client;
+package com.monow.external.kis.stock.client;
 
 import com.monow.external.kis.config.KisProperties;
-import com.monow.external.kis.dto.response.KisCurrentPriceResponse;
+import com.monow.external.kis.stock.dto.response.KisCurrentPriceResponse;
 import com.monow.external.kis.type.CurrentPriceMarketType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

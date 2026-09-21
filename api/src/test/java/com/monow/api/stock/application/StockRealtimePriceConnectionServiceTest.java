@@ -1,9 +1,9 @@
 package com.monow.api.stock.application;
 
-import com.monow.api.external.kis.client.KisRealtimePriceWebSocketClient;
-import com.monow.api.external.kis.event.KisWebSocketConnectionEvent;
-import com.monow.api.external.kis.type.CurrentPriceMarketType;
 import com.monow.api.stock.realtime.application.StockRealtimePriceConnectionService;
+import com.monow.external.kis.realtime.client.KisRealtimePriceWebSocketClient;
+import com.monow.external.kis.realtime.event.KisWebSocketConnectionEvent;
+import com.monow.external.kis.type.CurrentPriceMarketType;
 import com.monow.global.error.exception.BusinessException;
 import com.monow.global.error.model.ErrorCode;
 import org.junit.jupiter.api.DisplayName;

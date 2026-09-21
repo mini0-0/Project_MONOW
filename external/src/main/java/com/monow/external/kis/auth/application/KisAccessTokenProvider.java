@@ -1,7 +1,7 @@
-package com.monow.external.kis.application;
+package com.monow.external.kis.auth.application;
 
-import com.monow.external.kis.client.KisTokenClient;
-import com.monow.external.kis.dto.response.KisTokenResponse;
+import com.monow.external.kis.auth.client.KisTokenClient;
+import com.monow.external.kis.auth.dto.response.KisTokenResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

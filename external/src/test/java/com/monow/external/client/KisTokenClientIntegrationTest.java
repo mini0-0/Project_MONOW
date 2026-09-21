@@ -1,4 +1,4 @@
-package com.monow.api.external.kis.client;
+package test.java.com.monow.external.client;
 
 import com.monow.global.external.kis.dto.response.KisTokenResponse;
 import com.monow.global.external.kis.client.KisTokenClient;

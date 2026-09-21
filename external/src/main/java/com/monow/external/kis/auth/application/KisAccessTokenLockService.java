@@ -1,4 +1,4 @@
-package com.monow.external.kis.application;
+package com.monow.external.kis.auth.application;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;

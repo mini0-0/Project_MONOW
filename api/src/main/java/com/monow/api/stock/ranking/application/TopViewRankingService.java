@@ -1,12 +1,11 @@
 package com.monow.api.stock.ranking.application;
 
-
-import com.monow.api.external.kis.client.KisTopViewClient;
-import com.monow.api.external.kis.dto.response.KisTopViewItem;
 import com.monow.api.stock.ranking.dto.response.TopViewRankingItemResponse;
 import com.monow.api.stock.ranking.dto.response.TopViewRankingResponse;
 import com.monow.domain.stock.entity.Stock;
 import com.monow.domain.stock.repository.StockRepository;
+import com.monow.external.kis.stock.client.KisTopViewClient;
+import com.monow.external.kis.stock.dto.response.KisTopViewItem;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

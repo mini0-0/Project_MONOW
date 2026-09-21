@@ -1,4 +1,4 @@
-package com.monow.external.kis.stockmaster;
+package com.monow.external.kis.stock.stockmaster;
 
 import com.monow.domain.stock.entity.DomesticStockMarketType;
 import com.monow.global.error.exception.BusinessException;

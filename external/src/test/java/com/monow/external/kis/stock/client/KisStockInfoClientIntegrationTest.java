@@ -1,4 +1,4 @@
-package com.monow.external.stock.client;
+package com.monow.external.kis.stock.client;
 
 import com.monow.global.external.kis.application.KisAccessTokenProvider;
 import com.monow.global.external.kis.dto.response.KisStockInfoResponse;

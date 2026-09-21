@@ -1,4 +1,5 @@
-package com.monow.api.external.kis.type;
+package com.monow.external.kis.type;
+
 
 import lombok.Getter;
 
