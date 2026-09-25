@@ -1,10 +1,14 @@
 package com.monow.external.kis.stock.client;
 
 import com.monow.external.kis.config.KisProperties;
+import com.monow.external.kis.exception.DailyStockPriceRetryableException;
 import com.monow.external.kis.stock.dto.response.KisDailyPriceResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 
 @Component
 @RequiredArgsConstructor
@@ -20,21 +24,32 @@ public class KisDailyPriceClient {
                 .baseUrl(kisProperties.getBaseUrl())
                 .build();
 
-        return restClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/uapi/domestic-stock/v1/quotations/inquire-daily-price")
-                        .queryParam("FID_COND_MRKT_DIV_CODE", "J")
-                        .queryParam("FID_INPUT_ISCD", stockCode)
-                        .queryParam("FID_PERIOD_DIV_CODE", "D")
-                        .queryParam("FID_ORG_ADJ_PRC", "0")
-                        .build()
-                )
-                .header("authorization", "Bearer " + accessToken)
-                .header("appkey", kisProperties.getAppKey())
-                .header("appsecret", kisProperties.getAppSecret())
-                .header("tr_id", DAILY_PRICE_TR_ID)
-                .retrieve()
-                .body(KisDailyPriceResponse.class);
+        try {
+            return restClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/uapi/domestic-stock/v1/quotations/inquire-daily-price")
+                            .queryParam("FID_COND_MRKT_DIV_CODE", "J")
+                            .queryParam("FID_INPUT_ISCD", stockCode)
+                            .queryParam("FID_PERIOD_DIV_CODE", "D")
+                            .queryParam("FID_ORG_ADJ_PRC", "0")
+                            .build()
+                    )
+                    .header("authorization", "Bearer " + accessToken)
+                    .header("appkey", kisProperties.getAppKey())
+                    .header("appsecret", kisProperties.getAppSecret())
+                    .header("tr_id", DAILY_PRICE_TR_ID)
+                    .retrieve()
+                    .body(KisDailyPriceResponse.class);
 
+        } catch (ResourceAccessException exception) {
+            throw new DailyStockPriceRetryableException("KIS 일별 시세 네트워크 일시 오류", exception);
+
+        } catch (RestClientResponseException exception) {
+            if (exception.getStatusCode().is5xxServerError()) {
+                throw new DailyStockPriceRetryableException("KIS 일별 시세 서버 일시 오류", exception);
+            }
+            throw exception;
+
+        }
     }
 }

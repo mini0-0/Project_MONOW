@@ -1,5 +1,7 @@
 package com.monow.batch.stock.dailyprice.processor;
 
+import com.monow.batch.stock.dailyprice.application.DailyStockPriceRetryService;
+import com.monow.batch.stock.dailyprice.exception.DailyStockPriceSkippableException;
 import com.monow.batch.stock.dailyprice.mapper.KisDailyPriceMapper;
 import com.monow.domain.stock.entity.DomesticStockMarketType;
 import com.monow.domain.stock.entity.Stock;
@@ -38,7 +40,7 @@ class DailyStockPriceProcessorTest {
     private KisAccessTokenProvider kisAccessTokenProvider;
 
     @Mock
-    private KisDailyPriceClient kisDailyPriceClient;
+    private DailyStockPriceRetryService dailyStockPriceRetryService;
 
     @Mock
     private KisDailyPriceMapper kisDailyPriceMapper;
@@ -100,16 +102,17 @@ class DailyStockPriceProcessorTest {
                 12345678L
         );
 
+        given(kisAccessTokenProvider.getAccessToken())
+                .willReturn(ACCESS_TOKEN);
+        given(dailyStockPriceRetryService.fetchDailyPrice(ACCESS_TOKEN, STOCK_CODE))
+                .willReturn(kisResponse);
+
         given(kisDailyPriceMapper.toEntity(stock, existingOutput))
                 .willReturn(existingDailyPrice);
         given(kisDailyPriceMapper.toEntity(stock, newOutput))
                 .willReturn(newDailyPrice);
 
-        given(kisAccessTokenProvider.getAccessToken())
-                .willReturn(ACCESS_TOKEN);
 
-        given(kisDailyPriceClient.fetchDailyPrice(ACCESS_TOKEN, STOCK_CODE))
-                .willReturn(kisResponse);
         given(stockPriceDailyRepository.findByStockAndTradeDateIn(stock, List.of(existingTradeDate, newTradeDate)))
                 .willReturn(List.of(existingDailyPrice));
 
@@ -123,11 +126,14 @@ class DailyStockPriceProcessorTest {
 
         verify(kisAccessTokenProvider, times(1))
                 .getAccessToken();
-        verify(kisDailyPriceClient, times(1))
+        verify(dailyStockPriceRetryService, times(1))
                 .fetchDailyPrice(ACCESS_TOKEN, STOCK_CODE);
-        verify(kisDailyPriceClient, times(1))
-                .fetchDailyPrice(ACCESS_TOKEN, STOCK_CODE);
-
+        verify(kisDailyPriceMapper, times(1))
+                .toEntity(stock, existingOutput);
+        verify(kisDailyPriceMapper, times(1))
+                .toEntity(stock, newOutput);
+        verify(stockPriceDailyRepository, times(1))
+                .findByStockAndTradeDateIn(stock, List.of(existingTradeDate, newTradeDate));
 
     }
 
@@ -139,16 +145,16 @@ class DailyStockPriceProcessorTest {
 
         given(kisAccessTokenProvider.getAccessToken())
                 .willReturn(ACCESS_TOKEN);
-        given(kisDailyPriceClient.fetchDailyPrice(ACCESS_TOKEN, STOCK_CODE))
+        given(dailyStockPriceRetryService.fetchDailyPrice(ACCESS_TOKEN, STOCK_CODE))
                 .willReturn(null);
 
         // When & Then
         assertThatThrownBy(() -> dailyStockPriceProcessor.process(stock))
-                .isInstanceOf(BusinessException.class);
+                .isInstanceOf(DailyStockPriceSkippableException.class);
 
         verify(kisAccessTokenProvider, times(1))
                 .getAccessToken();
-        verify(kisDailyPriceClient, times(1))
+        verify(dailyStockPriceRetryService, times(1))
                 .fetchDailyPrice(ACCESS_TOKEN, STOCK_CODE);
 
         verifyNoInteractions(kisDailyPriceMapper);
@@ -173,16 +179,16 @@ class DailyStockPriceProcessorTest {
         given(kisAccessTokenProvider.getAccessToken())
                 .willReturn(ACCESS_TOKEN);
 
-        given(kisDailyPriceClient.fetchDailyPrice(ACCESS_TOKEN, STOCK_CODE))
+        given(dailyStockPriceRetryService.fetchDailyPrice(ACCESS_TOKEN, STOCK_CODE))
                 .willReturn(kisResponse);
 
         // When & Then
         assertThatThrownBy(() -> dailyStockPriceProcessor.process(stock))
-                .isInstanceOf(BusinessException.class);
+                .isInstanceOf(DailyStockPriceSkippableException.class);
 
         verify(kisAccessTokenProvider, times(1))
                 .getAccessToken();
-        verify(kisDailyPriceClient, times(1))
+        verify(dailyStockPriceRetryService, times(1))
                 .fetchDailyPrice(ACCESS_TOKEN, STOCK_CODE);
 
         verifyNoInteractions(kisDailyPriceMapper);
@@ -190,6 +196,50 @@ class DailyStockPriceProcessorTest {
 
 
     }
+
+    @Test
+    @DisplayName("[실패] - 일별 시세 가격 형식 오류 시 Skip 예외 발생")
+    void process_whenDailyPriceFormatIsInvalid_throwsSkippableException() {
+        // Given
+        Stock stock = createStock();
+
+        KisDailyPriceResponse.Output invalidOutput = new KisDailyPriceResponse.Output(
+                "20260910",
+                "72000",
+                "73500",
+                "INVALID",
+                "72800",
+                "12345678"
+        );
+
+        KisDailyPriceResponse kisResponse = new KisDailyPriceResponse(
+                "0",
+                "MCA00000",
+                "정상처리 되었습니다.",
+                List.of(invalidOutput)
+        );
+
+        given(kisDailyPriceMapper.toEntity(stock, invalidOutput))
+                .willThrow(new NumberFormatException("가격 형식 오류"));
+
+        given(kisAccessTokenProvider.getAccessToken())
+                .willReturn(ACCESS_TOKEN);
+        given(dailyStockPriceRetryService.fetchDailyPrice(ACCESS_TOKEN, STOCK_CODE))
+                .willReturn(kisResponse);
+
+        // When & Then
+        assertThatThrownBy(() -> dailyStockPriceProcessor.process(stock))
+                .isInstanceOf(DailyStockPriceSkippableException.class);
+
+        verify(kisAccessTokenProvider, times(1))
+                .getAccessToken();
+        verify(dailyStockPriceRetryService, times(1))
+                .fetchDailyPrice(ACCESS_TOKEN, STOCK_CODE);
+        verify(kisDailyPriceMapper, times(1))
+                .toEntity(stock, invalidOutput);
+        verifyNoInteractions(stockPriceDailyRepository);
+    }
+
 
     private Stock createStock() {
         return Stock.createStock(
