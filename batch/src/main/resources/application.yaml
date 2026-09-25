@@ -1,5 +1,5 @@
 spring:
-  cofig:
+  config:
     import: "classpath:kis.yaml"
 
   datasource:
