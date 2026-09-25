@@ -1,5 +1,7 @@
 package com.monow.batch.stock.dailyprice.processor;
 
+import com.monow.batch.stock.dailyprice.application.DailyStockPriceRetryService;
+import com.monow.batch.stock.dailyprice.exception.DailyStockPriceSkippableException;
 import com.monow.batch.stock.dailyprice.mapper.KisDailyPriceMapper;
 import com.monow.domain.stock.entity.Stock;
 import com.monow.domain.stock.entity.StockPriceDaily;
@@ -15,6 +17,7 @@ import org.springframework.batch.item.ItemProcessor;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -25,7 +28,7 @@ public class DailyStockPriceProcessor implements ItemProcessor<Stock, List<Stock
 
     private final KisAccessTokenProvider kisAccessTokenProvider;
 
-    private final KisDailyPriceClient kisDailyPriceClient;
+    private final DailyStockPriceRetryService dailyStockPriceRetryService;
 
     private final KisDailyPriceMapper kisDailyPriceMapper;
 
@@ -36,16 +39,29 @@ public class DailyStockPriceProcessor implements ItemProcessor<Stock, List<Stock
         String stockCode = stock.getStockCode();
         String accessToken = kisAccessTokenProvider.getAccessToken();
 
-        KisDailyPriceResponse response = kisDailyPriceClient.fetchDailyPrice(accessToken, stockCode);
+        KisDailyPriceResponse response = dailyStockPriceRetryService.fetchDailyPrice(accessToken, stockCode);
 
         if (response == null || response.output() == null) {
-            throw new BusinessException(ErrorCode.STOCK_DAILY_PRICE_FETCH_FAILED);
+            throw new DailyStockPriceSkippableException(
+                    "일별 시세 응답 데이터 누락 stockCode=" + stockCode
+            );
         }
 
-        List<StockPriceDaily> dailyPrices = response.output()
-                .stream()
-                .map(output -> kisDailyPriceMapper.toEntity(stock, output))
-                .toList();
+        List<StockPriceDaily> dailyPrices;
+
+        try {
+            dailyPrices = response.output()
+                    .stream()
+                    .map(output -> kisDailyPriceMapper.toEntity(stock, output))
+                    .toList();
+
+
+        } catch (NumberFormatException | DateTimeParseException exception) {
+            throw new DailyStockPriceSkippableException(
+                    "일별 시세 데이터 형식 오류 stockCode=" + stockCode,
+                    exception
+            );
+        }
 
         List<LocalDate> tradeDates = dailyPrices.stream()
                 .map(StockPriceDaily::getTradeDate)
