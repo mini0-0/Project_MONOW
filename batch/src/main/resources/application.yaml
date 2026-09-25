@@ -1,4 +1,7 @@
 spring:
+  cofig:
+    import: "classpath:kis.yaml"
+
   datasource:
     url: ${DB_URL}
     driver-class-name: org.postgresql.Driver
