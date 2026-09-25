@@ -1,10 +1,11 @@
 package com.monow.batch.stock.dailyprice.job;
 
+import com.monow.batch.stock.dailyprice.exception.DailyStockPriceSkippableException;
 import com.monow.batch.stock.dailyprice.processor.DailyStockPriceProcessor;
 import com.monow.batch.stock.dailyprice.writer.DailyStockPriceWriter;
 import com.monow.domain.stock.entity.Stock;
 import com.monow.domain.stock.entity.StockPriceDaily;
-import com.monow.domain.stock.repository.StockRepository;
+import jakarta.persistence.EntityManagerFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
@@ -13,7 +14,8 @@ import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemReader;
-import org.springframework.batch.item.support.ListItemReader;
+import org.springframework.batch.item.database.JpaPagingItemReader;
+import org.springframework.batch.item.database.builder.JpaPagingItemReaderBuilder;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,11 +28,13 @@ import java.util.List;
 public class DailyStockPriceJobConfig {
     private static final int CHUNK_SIZE = 10;
 
+    private static final int SKIP_LIMIT = 10;
+
     private final JobRepository jobRepository;
 
     private final PlatformTransactionManager transactionManager;
 
-    private final StockRepository stockRepository;
+    private final EntityManagerFactory entityManagerFactory;
 
     private final DailyStockPriceProcessor dailyStockPriceProcessor;
 
@@ -53,6 +57,9 @@ public class DailyStockPriceJobConfig {
                 .reader(dailyStockPriceReader)
                 .processor(dailyStockPriceProcessor)
                 .writer(dailyStockPriceWriter)
+                .faultTolerant()
+                .skip(DailyStockPriceSkippableException.class)
+                .skipLimit(SKIP_LIMIT)
                 .build();
 
 
@@ -61,8 +68,15 @@ public class DailyStockPriceJobConfig {
 
     @Bean
     @StepScope
-    public ItemReader<Stock> dailyStockPriceReader() {
-        return new ListItemReader<>(stockRepository.findAll());
+    public JpaPagingItemReader<Stock> dailyStockPriceReader() {
+
+        return new JpaPagingItemReaderBuilder<Stock>()
+                .name("dailyStockPriceReader")
+                .entityManagerFactory(entityManagerFactory)
+                .queryString("SELECT s FROM Stock s ORDER BY s.id")
+                .pageSize(CHUNK_SIZE)
+                .saveState(true)
+                .build();
     }
 
 }
