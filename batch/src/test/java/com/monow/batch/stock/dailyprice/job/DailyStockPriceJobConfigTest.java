@@ -91,7 +91,7 @@ class DailyStockPriceJobConfigTest {
                 .willReturn(kisResponse);
 
         JobParameters jobParameters = new JobParametersBuilder()
-                .addLong("timestamp", System.currentTimeMillis())
+                .addString("tradeDate", TRADE_DATE.toString())
                 .toJobParameters();
 
         // When
@@ -168,7 +168,7 @@ class DailyStockPriceJobConfigTest {
                 .willReturn(skHynixInvalidResponse);
 
         JobParameters jobParameters = new JobParametersBuilder()
-                .addLong("timestamp", System.currentTimeMillis())
+                .addString("tradeDate", TRADE_DATE.toString())
                 .toJobParameters();
 
         // When
@@ -214,9 +214,8 @@ class DailyStockPriceJobConfigTest {
         given(kisDailyPriceClient.fetchDailyPrice(ACCESS_TOKEN, failStockCode))
                 .willThrow(new RuntimeException("Restart 테스트용 강제 실패"));
 
-        LocalDate tradeDate = LocalDate.of(2026, 9, 24);
         JobParameters jobParameters = new JobParametersBuilder()
-                .addString("tradeDate", tradeDate.toString())
+                .addString("tradeDate", TRADE_DATE.toString())
                 .toJobParameters();
 
         // When
