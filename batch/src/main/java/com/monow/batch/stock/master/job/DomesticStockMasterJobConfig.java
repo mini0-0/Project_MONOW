@@ -1,5 +1,6 @@
 package com.monow.batch.stock.master.job;
 
+import com.monow.batch.stock.master.exception.DomesticStockMasterSkippableException;
 import com.monow.batch.stock.master.processor.DomesticStockMasterProcessor;
 import com.monow.batch.stock.master.reader.DomesticStockMasterReader;
 import com.monow.batch.stock.master.writer.DomesticStockMasterWriter;
@@ -23,6 +24,8 @@ import org.springframework.transaction.PlatformTransactionManager;
 public class DomesticStockMasterJobConfig {
 
     private static final int CHUNK_SIZE = 10;
+
+    private static final int SKIP_LIMIT = 5;
 
     private final JobRepository jobRepository;
 
@@ -50,6 +53,9 @@ public class DomesticStockMasterJobConfig {
                 .reader(domesticStockMasterReader)
                 .processor(domesticStockMasterProcessor)
                 .writer(domesticStockMasterWriter)
+                .faultTolerant()
+                .skip(DomesticStockMasterSkippableException.class)
+                .skipLimit(SKIP_LIMIT)
                 .build();
 
     }
