@@ -1,5 +1,7 @@
 package com.monow.batch.stock.master.processor;
 
+import com.monow.batch.stock.master.application.DomesticStockMasterRetryService;
+import com.monow.batch.stock.master.exception.DomesticStockMasterSkippableException;
 import com.monow.external.kis.stock.mapper.KisStockInfoMapper;
 import com.monow.domain.stock.entity.Stock;
 import com.monow.domain.stock.repository.StockRepository;
@@ -19,7 +21,7 @@ public class DomesticStockMasterProcessor implements ItemProcessor<DomesticStock
 
     private final KisAccessTokenProvider kisAccessTokenProvider;
 
-    private final KisStockInfoClient kisStockInfoClient;
+    private final DomesticStockMasterRetryService domesticStockMasterRetryService;
 
     private final KisStockInfoMapper kisStockInfoMapper;
 
@@ -34,14 +36,29 @@ public class DomesticStockMasterProcessor implements ItemProcessor<DomesticStock
         }
         String accessToken = kisAccessTokenProvider.getAccessToken();
 
-        KisStockInfoResponse stockInfoResponse = kisStockInfoClient.fetchStockInfo(accessToken, stockCode);
+        KisStockInfoResponse stockInfoResponse = domesticStockMasterRetryService.fetchDomesticStockMaster(accessToken, stockCode);
 
-        return kisStockInfoMapper.toEntity(
-                stockInfoResponse.output(),
-                item.marketType(),
-                item.krxTradable(),
-                item.nxtTradable()
-        );
+        if (stockInfoResponse == null || stockInfoResponse.output() == null) {
+            throw new DomesticStockMasterSkippableException(
+                    "종목 Master 응답 데이터 누락 stockCode=" + stockCode
+            );
+        }
+
+        try {
+            return kisStockInfoMapper.toEntity(
+                    stockInfoResponse.output(),
+                    item.marketType(),
+                    item.krxTradable(),
+                    item.nxtTradable()
+            );
+        } catch (IllegalArgumentException exception) {
+            throw new DomesticStockMasterSkippableException(
+                    "종목 Master 데이터 변환 오류 stockCode=" + stockCode,
+                    exception
+            );
+        }
+
+
     }
 
 }

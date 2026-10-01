@@ -8,6 +8,9 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
+
 @Component
 public class DomesticStockMasterScheduler {
 
@@ -25,7 +28,7 @@ public class DomesticStockMasterScheduler {
     @Scheduled(cron = "0 0 1 1 * *", zone = "Asia/Seoul")
     public void runDomesticStockMasterJob() throws Exception {
         JobParameters jobParameters = new JobParametersBuilder()
-                .addLong("timestamp", System.currentTimeMillis())
+                .addString("masterDate", LocalDate.now(ZoneId.of("Asia/Seoul")).toString())
                 .toJobParameters();
 
         jobLauncher.run(domesticStockMasterJob, jobParameters);

@@ -7,7 +7,9 @@ import com.monow.external.kis.stock.stockmaster.KisStockMasterExtractor;
 import com.monow.external.kis.stock.stockmaster.KisStockMasterParser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.configuration.annotation.StepScope;
+import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemReader;
+import org.springframework.batch.item.ItemStream;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -15,7 +17,9 @@ import java.util.*;
 @Component
 @StepScope
 @RequiredArgsConstructor
-public class DomesticStockMasterReader implements ItemReader<DomesticStockMasterItem> {
+public class DomesticStockMasterReader implements ItemReader<DomesticStockMasterItem>, ItemStream {
+
+    private static final String CURRENT_INDEX_KEY = "domesticStockMaster.currentIndex";
 
     private final KisStockMasterDownloader kisStockMasterDownloader;
 
@@ -24,8 +28,13 @@ public class DomesticStockMasterReader implements ItemReader<DomesticStockMaster
     private final KisStockMasterParser kisStockMasterParser;
 
     private List<DomesticStockMasterItem> items;
-
     private int currentIndex = 0;
+
+    @Override
+    public void open(ExecutionContext executionContext) {
+        currentIndex = executionContext.getInt(CURRENT_INDEX_KEY, 0);
+
+    }
 
     @Override
     public DomesticStockMasterItem read() {
@@ -39,6 +48,20 @@ public class DomesticStockMasterReader implements ItemReader<DomesticStockMaster
 
         return items.get(currentIndex++);
     }
+
+
+    @Override
+    public void update(ExecutionContext executionContext) {
+        executionContext.putInt(CURRENT_INDEX_KEY, currentIndex);
+
+    }
+
+    @Override
+    public void close() {
+
+    }
+
+
 
     private List<DomesticStockMasterItem> loadDomesticStockMasterItems() {
         Map<DomesticStockMarketType, List<String>> stockCodesByMarket = loadStockCodesByMarket();
@@ -103,7 +126,7 @@ public class DomesticStockMasterReader implements ItemReader<DomesticStockMaster
             Map<DomesticStockMarketType, List<String>> stockCodesByMarket,
             DomesticStockMarketType marketType
     ) {
-        return Set.copyOf(
+        return new LinkedHashSet<>(
                 stockCodesByMarket.getOrDefault(
                         marketType,
                         List.of()
