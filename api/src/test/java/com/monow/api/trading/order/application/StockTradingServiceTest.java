@@ -1,5 +1,6 @@
 package com.monow.api.trading.order.application;
 
+import com.monow.api.trading.order.dto.StockOrderPrice;
 import com.monow.external.kis.type.CurrentPriceMarketType;
 import com.monow.api.stock.realtime.dto.response.StockRealtimePriceResponse;
 import com.monow.domain.account.entity.Account;
@@ -112,7 +113,7 @@ class StockTradingServiceTest {
             given(stockRepository.findByStockCode(STOCK_CODE))
                     .willReturn(Optional.of(stock));
             given(stockOrderPriceService.getOrderPrice(STOCK_CODE))
-                    .willReturn(new StockOrderPriceService.StockOrderPrice(MARKET_TYPE, currentPrice));
+                    .willReturn(new StockOrderPrice(MARKET_TYPE, currentPrice));
             given(holdingRepository.findByAccountAndStock(account, stock))
                     .willReturn(Optional.empty());
 
@@ -204,7 +205,7 @@ class StockTradingServiceTest {
             given(stockRepository.findByStockCode(STOCK_CODE))
                     .willReturn(Optional.of(stock));
             given(stockOrderPriceService.getOrderPrice(STOCK_CODE))
-                    .willReturn(new StockOrderPriceService.StockOrderPrice(MARKET_TYPE, currentPrice));
+                    .willReturn(new StockOrderPrice(MARKET_TYPE, currentPrice));
             given(holdingRepository.findByAccountAndStock(account, stock))
                     .willReturn(Optional.of(holding));
 
@@ -270,7 +271,7 @@ class StockTradingServiceTest {
             given(stockRepository.findByStockCode(STOCK_CODE))
                     .willReturn(Optional.of(stock));
             given(stockOrderPriceService.getOrderPrice(STOCK_CODE))
-                    .willReturn(new StockOrderPriceService.StockOrderPrice(MARKET_TYPE, currentPrice));
+                    .willReturn(new StockOrderPrice(MARKET_TYPE, currentPrice));
             given(holdingRepository.findByAccountAndStock(account, stock))
                     .willReturn(Optional.empty());
 
@@ -346,7 +347,7 @@ class StockTradingServiceTest {
             given(stockRepository.findByStockCode(STOCK_CODE))
                     .willReturn(Optional.of(stock));
             given(stockOrderPriceService.getOrderPrice(STOCK_CODE))
-                    .willReturn(new StockOrderPriceService.StockOrderPrice(MARKET_TYPE, currentPrice));
+                    .willReturn(new StockOrderPrice(MARKET_TYPE, currentPrice));
 
             // When & Then
             assertThatThrownBy(() ->
@@ -456,7 +457,7 @@ class StockTradingServiceTest {
             given(stockRepository.findByStockCode(STOCK_CODE))
                     .willReturn(Optional.of(stock));
             given(stockOrderPriceService.getOrderPrice(STOCK_CODE))
-                    .willReturn(new StockOrderPriceService.StockOrderPrice(MARKET_TYPE, currentPrice));
+                    .willReturn(new StockOrderPrice(MARKET_TYPE, currentPrice));
             given(holdingRepository.findByAccountAndStock(account, stock))
                     .willReturn(Optional.of(holding));
 
@@ -548,7 +549,7 @@ class StockTradingServiceTest {
             given(stockRepository.findByStockCode(STOCK_CODE))
                     .willReturn(Optional.of(stock));
             given(stockOrderPriceService.getOrderPrice(STOCK_CODE))
-                    .willReturn(new StockOrderPriceService.StockOrderPrice(MARKET_TYPE, currentPrice));
+                    .willReturn(new StockOrderPrice(MARKET_TYPE, currentPrice));
             given(holdingRepository.findByAccountAndStock(account, stock))
                     .willReturn(Optional.empty());
 
@@ -604,7 +605,7 @@ class StockTradingServiceTest {
             given(stockRepository.findByStockCode(STOCK_CODE))
                     .willReturn(Optional.of(stock));
             given(stockOrderPriceService.getOrderPrice(STOCK_CODE))
-                    .willReturn(new StockOrderPriceService.StockOrderPrice(MARKET_TYPE, currentPrice));
+                    .willReturn(new StockOrderPrice(MARKET_TYPE, currentPrice));
             given(holdingRepository.findByAccountAndStock(account, stock))
                     .willReturn(Optional.of(holding));
 

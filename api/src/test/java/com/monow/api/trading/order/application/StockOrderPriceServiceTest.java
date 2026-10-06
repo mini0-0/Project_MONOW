@@ -1,5 +1,6 @@
 package com.monow.api.trading.order.application;
 
+import com.monow.api.trading.order.dto.StockOrderPrice;
 import com.monow.external.kis.type.CurrentPriceMarketType;
 import com.monow.api.stock.currentprice.application.StockCurrentPriceMarketSelection;
 import com.monow.api.stock.currentprice.application.StockCurrentPriceMarketSelector;
@@ -67,7 +68,7 @@ class StockOrderPriceServiceTest {
                     .willReturn(createCurrentPriceResponse(CURRENT_PRICE));
 
             // When
-            StockOrderPriceService.StockOrderPrice result = stockOrderPriceService.getOrderPrice(STOCK_CODE);
+            StockOrderPrice result = stockOrderPriceService.getOrderPrice(STOCK_CODE);
 
             // Then
             assertThat(result.marketType()).isEqualTo(MARKET_TYPE);
