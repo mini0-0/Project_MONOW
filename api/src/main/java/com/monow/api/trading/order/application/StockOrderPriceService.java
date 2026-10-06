@@ -6,6 +6,7 @@ import com.monow.api.stock.currentprice.application.StockCurrentPriceQueryServic
 import com.monow.api.stock.currentprice.dto.response.StockCurrentPriceResponse;
 import com.monow.api.stock.realtime.application.StockRealtimePriceCacheService;
 import com.monow.api.stock.realtime.dto.response.StockRealtimePriceResponse;
+import com.monow.api.trading.order.dto.StockOrderPrice;
 import com.monow.external.kis.type.CurrentPriceMarketType;
 import com.monow.global.error.exception.BusinessException;
 import com.monow.global.error.model.ErrorCode;
@@ -57,12 +58,6 @@ public class StockOrderPriceService {
         }
     }
 
-
-    public record StockOrderPrice(
-            CurrentPriceMarketType marketType,
-            BigDecimal price
-    ) {
-    }
 
 
 }

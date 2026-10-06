@@ -1,6 +1,7 @@
 package com.monow.api.trading.order.application;
 
 import com.monow.api.stock.realtime.dto.response.StockRealtimePriceResponse;
+import com.monow.api.trading.order.dto.StockOrderPrice;
 import com.monow.domain.account.entity.Account;
 import com.monow.domain.account.repository.AccountRepository;
 import com.monow.domain.holding.entity.Holding;
@@ -95,7 +96,7 @@ public class StockTradingTransactionTest {
 
         // Redis/KIS 대신 가상의 주문 가격 반환
         given(stockOrderPriceService.getOrderPrice(STOCK_CODE))
-                .willReturn(new StockOrderPriceService.StockOrderPrice(MARKET_TYPE, currentPrice));
+                .willReturn(new StockOrderPrice(MARKET_TYPE, currentPrice));
 
         // 주문 처리 마지막 단계에서 의도적으로 장애 발생
         doThrow(new RuntimeException("거래내역 저장 실패"))
@@ -149,7 +150,7 @@ public class StockTradingTransactionTest {
         Holding savedHolding = holdingRepository.save(holding);
 
         given(stockOrderPriceService.getOrderPrice(STOCK_CODE))
-                .willReturn(new StockOrderPriceService.StockOrderPrice(MARKET_TYPE, currentPrice));
+                .willReturn(new StockOrderPrice(MARKET_TYPE, currentPrice));
 
         doThrow(new RuntimeException("거래내역 저장 실패"))
                 .when(transactionHistoryRepository)
@@ -194,7 +195,7 @@ public class StockTradingTransactionTest {
         Stock savedStock = stockRepository.save(samsung);
 
         given(stockOrderPriceService.getOrderPrice(STOCK_CODE))
-                .willReturn(new StockOrderPriceService.StockOrderPrice(MARKET_TYPE, currentPrice));
+                .willReturn(new StockOrderPrice(MARKET_TYPE, currentPrice));
 
         // When
         stockTradingService.buyStock(savedUser.getId(), STOCK_CODE, quantity);
