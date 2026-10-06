@@ -1,5 +1,6 @@
 package com.monow.api.trading.order.application;
 
+import com.monow.api.trading.order.dto.StockOrderPrice;
 import com.monow.domain.account.entity.Account;
 import com.monow.domain.account.repository.AccountRepository;
 import com.monow.domain.holding.entity.Holding;
@@ -27,19 +28,9 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class StockTradingService {
 
-    private final AccountRepository accountRepository;
-
-    private final StockRepository stockRepository;
-
-    private final HoldingRepository holdingRepository;
-
-    private final OrderRepository orderRepository;
-
-    private final TransactionHistoryRepository transactionHistoryRepository;
-
     private final StockOrderPriceService stockOrderPriceService;
 
-    @Transactional
+    private final StockTradingTransactionService stockTradingTransactionService;
     public void buyStock(
             Long userId,
             String stockCode,
@@ -47,47 +38,13 @@ public class StockTradingService {
     ) {
         validateQuantity(quantity);
 
-        Account account = getAccount(userId);
-        User user = account.getUser();
-        Stock stock = getStock(stockCode);
 
         // 주문 시점 현재가 조회
-        StockOrderPriceService.StockOrderPrice orderPrice = stockOrderPriceService.getOrderPrice(stockCode);
+        StockOrderPrice orderPrice = stockOrderPriceService.getOrderPrice(stockCode);
 
-        CurrentPriceMarketType marketType = orderPrice.marketType();
-        BigDecimal executionPrice = orderPrice.price();
-
-        OrderMarketType orderMarketType = convertOrderMarketType(marketType);
-
-        BigDecimal totalAmount = executionPrice.multiply(BigDecimal.valueOf(quantity));
-        BigDecimal beforeBalance = account.getBalance();
-        account.deductBalance(totalAmount);
-        BigDecimal afterBalance = account.getBalance();
-
-        Optional<Holding> existingHolding = holdingRepository.findByAccountAndStock(account, stock);
-
-        if (existingHolding.isEmpty()) {
-            Holding holding = Holding.createHolding(user, account, stock, quantity, totalAmount);
-
-            holdingRepository.save(holding);
-        } else {
-            Holding holding = existingHolding.get();
-            holding.buy(quantity, executionPrice);
-        }
-
-
-        LocalDateTime now = LocalDateTime.now();
-
-        Order order = Order.createBuyOrder(user, account, stock, orderMarketType, quantity, executionPrice, totalAmount, now, now);
-        orderRepository.save(order);
-
-        String description = stock.getStockName() + " " + quantity + "주 매수";
-
-        TransactionHistory transactionHistory = TransactionHistory.createBuyHistory(user, account, order, totalAmount, beforeBalance, afterBalance, description);
-        transactionHistoryRepository.save(transactionHistory);
+        stockTradingTransactionService.buyStock(userId, stockCode, quantity, orderPrice);
     }
 
-    @Transactional
     public void sellStock(
             Long userId,
             String stockCode,
@@ -95,39 +52,11 @@ public class StockTradingService {
     ) {
         validateQuantity(quantity);
 
-        Account account = getAccount(userId);
-        User user = account.getUser();
-        Stock stock = getStock(stockCode);
-
         // 주문 시점 현재가 조회
-        StockOrderPriceService.StockOrderPrice orderPrice = stockOrderPriceService.getOrderPrice(stockCode);
+        StockOrderPrice orderPrice = stockOrderPriceService.getOrderPrice(stockCode);
 
-        CurrentPriceMarketType marketType = orderPrice.marketType();
-        BigDecimal executionPrice = orderPrice.price();
+        stockTradingTransactionService.sellStock(userId, stockCode, quantity, orderPrice);
 
-
-        OrderMarketType orderMarketType = convertOrderMarketType(marketType);
-
-        Holding holding = holdingRepository.findByAccountAndStock(account, stock)
-                .orElseThrow(() -> new BusinessException(ErrorCode.HOLDING_NOT_FOUND));
-
-        BigDecimal totalAmount = executionPrice.multiply(BigDecimal.valueOf(quantity));
-        BigDecimal beforeBalance = account.getBalance();
-
-        holding.sell(quantity);
-        account.addBalance(totalAmount);
-
-        BigDecimal afterBalance = account.getBalance();
-
-        LocalDateTime now = LocalDateTime.now();
-
-        Order order = Order.createSellOrder(user, account, stock, orderMarketType, quantity, executionPrice, totalAmount, now, now);
-        orderRepository.save(order);
-
-        String description = stock.getStockName() + " " + quantity + "주 매도";
-
-        TransactionHistory transactionHistory = TransactionHistory.createSellHistory(user, account, order, totalAmount, beforeBalance, afterBalance, description);
-        transactionHistoryRepository.save(transactionHistory);
     }
 
     // 주문 수량 검증
@@ -135,30 +64,6 @@ public class StockTradingService {
         if (quantity <= 0) {
             throw new BusinessException(ErrorCode.INVALID_ORDER_QUANTITY);
         }
-    }
-
-    // 사용자 계좌 조회
-    private Account getAccount(Long userId) {
-        return accountRepository.findByUserId(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.ACCOUNT_NOT_FOUND));
-
-    }
-
-    // 종목 조회
-    private Stock getStock(String stockCode) {
-        return stockRepository.findByStockCode(stockCode)
-                .orElseThrow(() -> new BusinessException(ErrorCode.STOCK_NOT_FOUND));
-
-    }
-
-    private OrderMarketType convertOrderMarketType(
-            CurrentPriceMarketType marketType
-    ) {
-        return switch (marketType) {
-            case KRX -> OrderMarketType.KRX;
-            case NXT -> OrderMarketType.NXT;
-            case INTEGRATED -> OrderMarketType.INTEGRATED;
-        };
     }
 
 }
