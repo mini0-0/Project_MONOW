@@ -124,7 +124,7 @@ public class StockTradingTransactionService {
 
     // 사용자 계좌 조회
     private Account getAccount(Long userId) {
-        return accountRepository.findByUserId(userId)
+        return accountRepository.findByUserIdForUpdate(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.ACCOUNT_NOT_FOUND));
 
     }
