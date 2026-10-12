@@ -67,10 +67,14 @@ public class Order extends BaseTimeEntity {
     @Column(name = "canceled_at")
     private LocalDateTime canceledAt;
 
+    @Column(name = "idempotency_key", unique = true)
+    private String idempotencyKey;
+
     private Order(
             User user,
             Account account,
             Stock stock,
+            String idempotencyKey,
             OrderType orderType,
             OrderStatus orderStatus,
             OrderMarketType orderMarketType,
@@ -83,6 +87,7 @@ public class Order extends BaseTimeEntity {
         this.user = user;
         this.account = account;
         this.stock = stock;
+        this.idempotencyKey = idempotencyKey;
         this.orderType = orderType;
         this.orderStatus = orderStatus;
         this.orderMarketType = orderMarketType;
@@ -97,6 +102,7 @@ public class Order extends BaseTimeEntity {
             User user,
             Account account,
             Stock stock,
+            String idempotencyKey,
             OrderMarketType orderMarketType,
             Integer quantity,
             BigDecimal orderPrice,
@@ -108,6 +114,7 @@ public class Order extends BaseTimeEntity {
                 user,
                 account,
                 stock,
+                idempotencyKey,
                 OrderType.BUY,
                 OrderStatus.EXECUTED,
                 orderMarketType,
@@ -123,6 +130,7 @@ public class Order extends BaseTimeEntity {
             User user,
             Account account,
             Stock stock,
+            String idempotencyKey,
             OrderMarketType orderMarketType,
             Integer quantity,
             BigDecimal orderPrice,
@@ -134,6 +142,7 @@ public class Order extends BaseTimeEntity {
                 user,
                 account,
                 stock,
+                idempotencyKey,
                 OrderType.SELL,
                 OrderStatus.EXECUTED,
                 orderMarketType,

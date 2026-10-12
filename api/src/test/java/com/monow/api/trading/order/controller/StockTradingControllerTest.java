@@ -24,6 +24,8 @@ class StockTradingControllerTest {
     private static final Long USER_ID = 2L;
     private static final String STOCK_CODE = "005930";
 
+    private static final String IDEMPOTENCY_KEY = "order-request-001";
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -49,31 +51,14 @@ class StockTradingControllerTest {
 
             // When & Then
             mockMvc.perform(post("/api/v1/orders")
+                            .header("Idempotency-Key", IDEMPOTENCY_KEY)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.success").value(true));
 
-            verify(stockTradingService).buyStock(USER_ID, STOCK_CODE,quantity);
+            verify(stockTradingService).buyStock(USER_ID, STOCK_CODE,quantity, IDEMPOTENCY_KEY);
 
-        }
-
-        @Test
-        @DisplayName("[실패] - 주문 유형이 없는 경우 잘못된 요청 응답")
-        void createOrder_whenOrderTypeIsNull_returnsBadRequest() throws Exception {
-            // Given
-            int quantity = 5;
-
-            StockOrderRequest request = new StockOrderRequest(USER_ID, STOCK_CODE, null, quantity);
-
-
-            // When & Then
-            mockMvc.perform(post("/api/v1/orders")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isBadRequest());
-
-            verifyNoInteractions(stockTradingService);
         }
 
     }
@@ -92,13 +77,57 @@ class StockTradingControllerTest {
 
             // When & Then
             mockMvc.perform(post("/api/v1/orders")
+                            .header("Idempotency-Key", IDEMPOTENCY_KEY)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.success").value(true));
 
-            verify(stockTradingService).sellStock(USER_ID, STOCK_CODE, quantity);
+            verify(stockTradingService).sellStock(USER_ID, STOCK_CODE, quantity, IDEMPOTENCY_KEY);
 
+
+        }
+    }
+
+    @Nested
+    @DisplayName("주문 요청 검증")
+    class CreateOrderValidation {
+
+        @Test
+        @DisplayName("[실패] - 주문 유형이 없는 경우 잘못된 요청 응답")
+        void createOrder_whenOrderTypeIsNull_returnsBadRequest() throws Exception {
+            // Given
+            int quantity = 5;
+
+            StockOrderRequest request = new StockOrderRequest(USER_ID, STOCK_CODE, null, quantity);
+
+
+            // When & Then
+            mockMvc.perform(post("/api/v1/orders")
+                            .header("Idempotency-Key", IDEMPOTENCY_KEY)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isBadRequest());
+
+            verifyNoInteractions(stockTradingService);
+        }
+
+        @Test
+        @DisplayName("[실패] - 멱등성 키가 없는 경우 잘못된 요청 응답")
+        void GivenIdempotencyKeyIsMissing_WhenCreateOrder_ThenReturnBadRequest() throws Exception {
+            // Given
+            int quantity = 5;
+
+            StockOrderRequest request = new StockOrderRequest(USER_ID, STOCK_CODE, null, quantity);
+
+
+            // When & Then
+            mockMvc.perform(post("/api/v1/orders")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isBadRequest());
+
+            verifyNoInteractions(stockTradingService);
 
         }
     }

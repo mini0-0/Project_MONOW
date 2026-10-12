@@ -34,8 +34,13 @@ import static org.mockito.Mockito.verify;
 public class StockTradingTransactionBoundaryTest {
 
     private static final String ACCOUNT_NUMBER = "MONOW260101123456";
+
     private static final String STOCK_CODE = "005930";
+
     private static final CurrentPriceMarketType MARKET_TYPE = CurrentPriceMarketType.KRX;
+
+    private static final String IDEMPOTENCY_KEY = "order-request-001";
+
     private static final BigDecimal SEED_MONEY = BigDecimal.valueOf(100_000_000L);
 
 
@@ -102,7 +107,8 @@ public class StockTradingTransactionBoundaryTest {
         stockTradingService.buyStock(
                 savedUser.getId(),
                 STOCK_CODE,
-                quantity
+                quantity,
+                IDEMPOTENCY_KEY
         );
 
         // Then
@@ -163,7 +169,8 @@ public class StockTradingTransactionBoundaryTest {
         stockTradingService.sellStock(
                 savedUser.getId(),
                 STOCK_CODE,
-                sellQuantity
+                sellQuantity,
+                IDEMPOTENCY_KEY
         );
 
         // Then
