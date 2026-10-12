@@ -37,6 +37,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class StockTradingConcurrencyTest {
 
     private static final String ACCOUNT_NUMBER = "MONOW260101123456";
+
     private static final String STOCK_CODE = "005930";
 
     private static final CurrentPriceMarketType MARKET_TYPE = CurrentPriceMarketType.KRX;
@@ -109,12 +110,14 @@ public class StockTradingConcurrencyTest {
         // When
         try {
             for (int i = 0; i < THREAD_COUNT; i++) {
+                String idempotencyKey = "buy-order-" + i;
+
                 Future<?> future = executorService.submit(() -> {
                     readyLatch.countDown();
 
                     try {
                         startLatch.await();
-                        stockTradingTransactionService.buyStock(savedUser.getId(), STOCK_CODE, existingQuantity, orderPrice);
+                        stockTradingTransactionService.buyStock(savedUser.getId(), STOCK_CODE, existingQuantity, orderPrice, idempotencyKey);
                         successCount.incrementAndGet();
 
                     } catch (BusinessException exception) {
@@ -221,12 +224,14 @@ public class StockTradingConcurrencyTest {
         // When
         try {
             for (int i= 0; i < THREAD_COUNT; i++) {
+                String idempotencyKey = "sell-order-" + i;
+
                 Future<?> future = executorService.submit(() -> {
                     readyLatch.countDown();
 
                     try {
                         startLatch.await();
-                        stockTradingTransactionService.sellStock(savedUser.getId(), STOCK_CODE, sellQuantity, orderPrice);
+                        stockTradingTransactionService.sellStock(savedUser.getId(), STOCK_CODE, sellQuantity, orderPrice, idempotencyKey);
                         successCount.incrementAndGet();
 
                     } catch (BusinessException exception) {

@@ -41,8 +41,13 @@ import static org.mockito.BDDMockito.any;
 public class StockTradingTransactionTest {
 
     private static final String ACCOUNT_NUMBER = "MONOW260101123456";
+
     private static final String STOCK_CODE = "005930";
+
     private static final CurrentPriceMarketType MARKET_TYPE = CurrentPriceMarketType.KRX;
+
+    private static final String IDEMPOTENCY_KEY = "order-request-001";
+
     private static final BigDecimal SEED_MONEY = BigDecimal.valueOf(100_000_000L);
 
     @Autowired
@@ -105,7 +110,7 @@ public class StockTradingTransactionTest {
 
 
         // When
-        assertThatThrownBy(() -> stockTradingService.buyStock(user.getId() , STOCK_CODE, quantity))
+        assertThatThrownBy(() -> stockTradingService.buyStock(user.getId() , STOCK_CODE, quantity, IDEMPOTENCY_KEY))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("거래내역 저장 실패");;
 
@@ -157,7 +162,7 @@ public class StockTradingTransactionTest {
                 .save(any(TransactionHistory.class));
 
         // When
-        assertThatThrownBy(() -> stockTradingService.sellStock(savedUser.getId(), STOCK_CODE, sellQuantity))
+        assertThatThrownBy(() -> stockTradingService.sellStock(savedUser.getId(), STOCK_CODE, sellQuantity, IDEMPOTENCY_KEY))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("거래내역 저장 실패");
 
@@ -198,7 +203,7 @@ public class StockTradingTransactionTest {
                 .willReturn(new StockOrderPrice(MARKET_TYPE, currentPrice));
 
         // When
-        stockTradingService.buyStock(savedUser.getId(), STOCK_CODE, quantity);
+        stockTradingService.buyStock(savedUser.getId(), STOCK_CODE, quantity, IDEMPOTENCY_KEY);
 
         // Then
         // Account Commit 확인
