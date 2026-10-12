@@ -34,7 +34,8 @@ public class StockTradingService {
     public void buyStock(
             Long userId,
             String stockCode,
-            int quantity
+            int quantity,
+            String idempotencyKey
     ) {
         validateQuantity(quantity);
 
@@ -42,20 +43,21 @@ public class StockTradingService {
         // 주문 시점 현재가 조회
         StockOrderPrice orderPrice = stockOrderPriceService.getOrderPrice(stockCode);
 
-        stockTradingTransactionService.buyStock(userId, stockCode, quantity, orderPrice);
+        stockTradingTransactionService.buyStock(userId, stockCode, quantity, orderPrice, idempotencyKey);
     }
 
     public void sellStock(
             Long userId,
             String stockCode,
-            int quantity
+            int quantity,
+            String idempotencyKey
     ) {
         validateQuantity(quantity);
 
         // 주문 시점 현재가 조회
         StockOrderPrice orderPrice = stockOrderPriceService.getOrderPrice(stockCode);
 
-        stockTradingTransactionService.sellStock(userId, stockCode, quantity, orderPrice);
+        stockTradingTransactionService.sellStock(userId, stockCode, quantity, orderPrice, idempotencyKey);
 
     }
 
