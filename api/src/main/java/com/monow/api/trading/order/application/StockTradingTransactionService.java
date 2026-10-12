@@ -43,9 +43,17 @@ public class StockTradingTransactionService {
             Long userId,
             String stockCode,
             int quantity,
-            StockOrderPrice orderPrice
+            StockOrderPrice orderPrice,
+            String idempotencyKey
     ) {
         Account account = getAccount(userId);
+
+        Optional<Order> existingOrder = orderRepository.findByUser_IdAndIdempotencyKey(userId, idempotencyKey);
+
+        if (existingOrder.isPresent()) {
+            return;
+        }
+
         User user = account.getUser();
         Stock stock = getStock(stockCode);
 
@@ -74,7 +82,7 @@ public class StockTradingTransactionService {
 
         LocalDateTime now = LocalDateTime.now();
 
-        Order order = Order.createBuyOrder(user, account, stock, orderMarketType, quantity, executionPrice, totalAmount, now, now);
+        Order order = Order.createBuyOrder(user, account, stock, idempotencyKey, orderMarketType, quantity, executionPrice, totalAmount, now, now);
         orderRepository.save(order);
 
         String description = stock.getStockName() + " " + quantity + "주 매수";
@@ -89,9 +97,17 @@ public class StockTradingTransactionService {
             Long userId,
             String stockCode,
             int quantity,
-            StockOrderPrice orderPrice
+            StockOrderPrice orderPrice,
+            String idempotencyKey
     ) {
         Account account = getAccount(userId);
+
+        Optional<Order> existingOrder = orderRepository.findByUser_IdAndIdempotencyKey(userId, idempotencyKey);
+
+        if (existingOrder.isPresent()) {
+            return;
+        }
+
         User user = account.getUser();
         Stock stock = getStock(stockCode);
 
@@ -113,7 +129,7 @@ public class StockTradingTransactionService {
 
         LocalDateTime now = LocalDateTime.now();
 
-        Order order = Order.createSellOrder(user, account, stock, orderMarketType, quantity, executionPrice, totalAmount, now, now);
+        Order order = Order.createSellOrder(user, account, stock, idempotencyKey, orderMarketType, quantity, executionPrice, totalAmount, now, now);
         orderRepository.save(order);
 
         String description = stock.getStockName() + " " + quantity + "주 매도";
