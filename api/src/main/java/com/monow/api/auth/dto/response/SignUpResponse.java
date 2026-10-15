@@ -1,10 +1,10 @@
 package com.monow.api.auth.dto.response;
 
-import com.monow.api.auth.application.result.AuthResult;
+import com.monow.api.auth.application.result.SignUpResult;
 import com.monow.domain.user.entity.UserRole;
 import com.monow.domain.user.entity.UserStatus;
 
-public record AuthResponse(
+public record SignUpResponse(
         Long userId,
         String email,
         String name,
@@ -12,8 +12,8 @@ public record AuthResponse(
         UserRole userRole,
         UserStatus status
 ) {
-        public static AuthResponse from(AuthResult result) {
-            return new AuthResponse(
+        public static SignUpResponse from(SignUpResult result) {
+            return new SignUpResponse(
                     result.userId(),
                     result.email(),
                     result.name(),
