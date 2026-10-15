@@ -1,23 +1,34 @@
 package com.monow.api.auth.controller;
 
 import com.monow.api.auth.application.AuthService;
+import com.monow.api.auth.application.command.AccessTokenReissueCommand;
 import com.monow.api.auth.application.command.LoginCommand;
 import com.monow.api.auth.application.command.SignUpCommand;
-import com.monow.api.auth.application.result.AuthResult;
+import com.monow.api.auth.application.result.AccessTokenReissueResult;
+import com.monow.api.auth.application.result.LoginResult;
+import com.monow.api.auth.application.result.SignUpResult;
 import com.monow.domain.user.entity.UserRole;
 import com.monow.domain.user.entity.UserStatus;
 import com.monow.global.error.exception.BusinessException;
 import com.monow.global.error.handler.GlobalExceptionHandler;
 import com.monow.global.error.model.ErrorCode;
+import com.monow.global.security.jwt.JwtTokenProvider;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
@@ -29,18 +40,31 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(AuthController.class)
+@AutoConfigureMockMvc(addFilters = false)
 @Import(GlobalExceptionHandler.class)
 public class AuthControllerTest {
-    @Autowired private MockMvc mockMvc;
+
+    private static final String ACCESS_TOKEN = "access-token";
+    private static final String REFRESH_TOKEN = "refresh-token";
+
+    private static final Long USER_ID = 1L;
+
+    @Autowired
+    private MockMvc mockMvc;
 
     @MockitoBean
     private AuthService authService;
+
+    @MockitoBean
+    private JwtTokenProvider jwtTokenProvider;
+
+
 
     @Nested
     @DisplayName("회원가입")
     class signup {
         @Test
-        @DisplayName("회원가입 API 성공")
+        @DisplayName("[성공] - 회원가입 API 성공")
         void signupApiSuccess() throws Exception {
             // Given
             String requestBody = """
@@ -53,8 +77,8 @@ public class AuthControllerTest {
                     }
                     """;
 
-            AuthResult authResult = new AuthResult(
-                    1L,
+            SignUpResult signUpResult = new SignUpResult(
+                    USER_ID,
                     "test@test.com",
                     "홍길동",
                     "워렌버핏",
@@ -62,7 +86,7 @@ public class AuthControllerTest {
                     UserStatus.ACTIVE);
 
             given(authService.signUp(any(SignUpCommand.class)))
-                    .willReturn(authResult);
+                    .willReturn(signUpResult);
 
 
             // When & Then
@@ -83,7 +107,7 @@ public class AuthControllerTest {
         }
 
         @Test
-        @DisplayName("회원가입 API 실패 - 비밀번호 확인 불일치")
+        @DisplayName("[실패] - 비밀번호 확인 불일치")
         void signupApiFail_PasswordBlank() throws Exception {
             // Given
             String requestBody = """
@@ -93,7 +117,6 @@ public class AuthControllerTest {
                         "confirmPassword": "0000",
                         "name" : "홍길동",
                         "nickname" : "워렌버핏"
-                                    
                     }
                     """;
 
@@ -114,7 +137,7 @@ public class AuthControllerTest {
 
 
         @Test
-        @DisplayName("회원가입 API 실패 - 이미 존재하는 이메일")
+        @DisplayName("[실패] - 이미 존재하는 이메일")
         void signupApiFail_DuplicateEmail() throws Exception {
             // Given
             String requestBody = """
@@ -124,7 +147,6 @@ public class AuthControllerTest {
                         "confirmPassword" : "1234",
                         "name" : "홍길동",
                         "nickname" : "워렌버핏"
-                                    
                     }
                     """;
 
@@ -143,7 +165,7 @@ public class AuthControllerTest {
         }
 
         @Test
-        @DisplayName("회원가입 API 실패 - 이미 존재하는 닉네임")
+        @DisplayName("[실패] - 이미 존재하는 닉네임")
         void signupApiFail_DuplicateNickname() throws Exception {
             // Given
             String requestBody = """
@@ -153,7 +175,6 @@ public class AuthControllerTest {
                         "confirmPassword" : "1234",
                         "name" : "홍길동",
                         "nickname" : "워렌버핏"
-                                    
                     }
                     """;
 
@@ -172,7 +193,7 @@ public class AuthControllerTest {
         }
 
         @Test
-        @DisplayName("회원가입 API 실패 - 이메일 형식이 오류")
+        @DisplayName("[실패] - 이메일 형식이 오류")
         void signupApiFail_InvalidEmail() throws Exception {
             // Given
             String requestBody = """
@@ -182,7 +203,6 @@ public class AuthControllerTest {
                         "confirmPassword" : "1234",
                         "name" : "홍길동",
                         "nickname" : "워렌버핏"
-                                    
                     }
                     """;
 
@@ -199,7 +219,7 @@ public class AuthControllerTest {
 
 
         @Test
-        @DisplayName("회원가입 API 실패 - 이메일 누락")
+        @DisplayName("[실패] - 이메일 누락")
         void signupApiFail_EmailBlank() throws Exception {
             // Given
             String requestBody = """
@@ -209,7 +229,6 @@ public class AuthControllerTest {
                         "confirmPassword" : "1234",
                         "name" : "홍길동",
                         "nickname" : "워렌버핏"
-                                    
                     }
                     """;
 
@@ -225,7 +244,7 @@ public class AuthControllerTest {
         }
 
         @Test
-        @DisplayName("회원가입 API 실패 - 이름 누락")
+        @DisplayName("[실패] - 이름 누락")
         void signupApiFail_NameBlank() throws Exception {
             // Given
             String requestBody = """
@@ -235,7 +254,6 @@ public class AuthControllerTest {
                         "confirmPassword" : "1234",
                         "name" : "",
                         "nickname" : "워렌버핏"
-                                    
                     }
                     """;
 
@@ -251,7 +269,7 @@ public class AuthControllerTest {
         }
 
         @Test
-        @DisplayName("회원가입 API 실패 - 닉네임 누락")
+        @DisplayName("[실패] - 닉네임 누락")
         void signupApiFail_NicknameBlank() throws Exception {
             // Given
             String requestBody = """
@@ -261,7 +279,6 @@ public class AuthControllerTest {
                         "confirmPassword" : "1234",
                         "name" : "홍길동",
                         "nickname" : ""
-                                    
                     }
                     """;
 
@@ -282,54 +299,46 @@ public class AuthControllerTest {
     class login {
 
         @Test
-        @DisplayName("로그인 API 성공")
+        @DisplayName("[성공] - 로그인 API 성공")
         void loginSuccess() throws Exception {
             // Given
             String requestBody = """
                     {
                         "email": "test@test.com",
                         "password": "1234"
-                        
                     }
                     """;
 
-            AuthResult authResult = new AuthResult(
-                    1L,
-                    "test@test.com",
-                    "홍길동",
-                    "워렌버핏",
-                    UserRole.USER,
-                    UserStatus.ACTIVE);
+            LoginResult loginResult= new LoginResult(
+                    USER_ID,
+                    ACCESS_TOKEN,
+                    REFRESH_TOKEN
+            );
 
             given(authService.login(any(LoginCommand.class)))
-                    .willReturn(authResult);
+                    .willReturn(loginResult);
 
             // When & Then
             mockMvc.perform(post("/api/v1/auth/login")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(requestBody))
-//                .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.success").value(true))
                     .andExpect(jsonPath("$.data.userId").value(1L))
-                    .andExpect(jsonPath("$.data.email").value("test@test.com"))
-                    .andExpect(jsonPath("$.data.name").value("홍길동"))
-                    .andExpect(jsonPath("$.data.nickname").value("워렌버핏"))
-                    .andExpect(jsonPath("$.data.userRole").value("USER"))
-                    .andExpect(jsonPath("$.data.status").value("ACTIVE"))
-            ;
+                    .andExpect(jsonPath("$.data.accessToken").value(ACCESS_TOKEN))
+                    .andExpect(jsonPath("$.data.refreshToken").value(REFRESH_TOKEN));
 
+            verify(authService).login(any(LoginCommand.class));
 
         }
 
         @Test
-        @DisplayName("로그인 API 실패 - 회원가입 안한 계정")
+        @DisplayName("[실패] - 회원가입 안한 계정")
         void loginFail_notSignUp() throws Exception {
             String requestBody = """
                     {
                         "email": "test@test.com",
                         "password": "1234"
-                        
                     }
                     """;
 
@@ -347,16 +356,16 @@ public class AuthControllerTest {
                     .andExpect(jsonPath("$.error.message").value("이메일 또는 비밀번호가 일치하지 않습니다."));
 
             verify(authService).login(any(LoginCommand.class));
+
         }
 
         @Test
-        @DisplayName("로그인 API 실패 - 비밀번호 불일치")
+        @DisplayName("[실패] - 비밀번호 불일치")
         void loginFail_invalidPassword() throws Exception {
             String requestBody = """
                     {
                         "email": "test@test.com",
                         "password": "0000"
-                        
                     }
                     """;
 
@@ -368,7 +377,6 @@ public class AuthControllerTest {
             mockMvc.perform(post("/api/v1/auth/login")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(requestBody))
-//                        .andDo(print())
                     .andExpect(status().isUnauthorized())
                     .andExpect(jsonPath("$.success").value(false))
                     .andExpect(jsonPath("$.error.code").value("LOGIN_FAIL"))
@@ -379,7 +387,7 @@ public class AuthControllerTest {
         }
 
         @Test
-        @DisplayName("로그인 API 실패 - 이메일 누락")
+        @DisplayName("[실패] - 이메일 누락")
         void loginApiFail_emailBlank() throws Exception {
             // Given
             String requestBody = """
@@ -400,11 +408,12 @@ public class AuthControllerTest {
                     .andExpect(jsonPath("$.error.message").value("이메일은 필수 입력값입니다."));
 
             verify(authService, never()).login(any(LoginCommand.class));
+
         }
 
 
         @Test
-        @DisplayName("로그인 API 실패 - 비밀번호 누락")
+        @DisplayName("[실패] - 비밀번호 누락")
         void loginApiFail_passwordBlank() throws Exception {
             // Given
             String requestBody = """
@@ -425,11 +434,12 @@ public class AuthControllerTest {
                     .andExpect(jsonPath("$.error.message").value("비밀번호는 필수 입력값입니다."));
 
             verify(authService, never()).login(any(LoginCommand.class));
+
         }
 
 
         @Test
-        @DisplayName("로그인 API 실패 - 이메일 형식 오류")
+        @DisplayName("[실패] - 이메일 형식 오류")
         void loginApiFail_invalidEmail() throws Exception {
             // Given
             String requestBody = """
@@ -450,6 +460,91 @@ public class AuthControllerTest {
                     .andExpect(jsonPath("$.error.message").value("올바른 이메일 형식이 아닙니다."));
 
             verify(authService, never()).login(any(LoginCommand.class));
+
         }
     }
+
+    @Nested
+    @DisplayName("로그아웃")
+    class Logout {
+
+        @Test
+        @DisplayName("[성공] - 로그아웃 API 성공")
+        void GivenAuthenticatedUser_WhenLogout_ThenReturnSuccess() throws Exception {
+            // Given
+            Authentication authentication = new UsernamePasswordAuthenticationToken(
+                    USER_ID,
+                    null,
+                    List.of(new SimpleGrantedAuthority("ROLE_USER"))
+            );
+
+            // When & Then
+            mockMvc.perform(post("/api/v1/auth/logout")
+                        .principal(authentication))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success").value(true));
+
+            verify(authService).logout(USER_ID);
+        }
+
+    }
+
+
+
+    @Nested
+    @DisplayName("Access Token 재발급")
+    class AccessTokenReissue {
+
+        @Test
+        @DisplayName("[성공] - Access Token 재발급 성공")
+        void GivenValidRefreshToken_WhenReissue_ThenReturnAccessToken() throws Exception {
+            // Given
+            String requestBody = """
+                {
+                    "refreshToken": "refreshToken"
+                }
+                """;
+
+            AccessTokenReissueResult result = new AccessTokenReissueResult("newAccessToken");
+
+            given(authService.reissueAccessToken(any(AccessTokenReissueCommand.class)))
+                    .willReturn(result);
+
+            //When & Then
+            mockMvc.perform(post("/api/v1/auth/reissue")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.data.accessToken").value("newAccessToken"));
+
+            verify(authService).reissueAccessToken(any(AccessTokenReissueCommand.class));
+
+        }
+
+        @Test
+        @DisplayName("[실패] - Refresh Token 누락")
+        void GivenBlankRefreshToken_WhenReissue_ThenReturnBadRequest() throws Exception {
+            // Given
+            String requestBody = """
+                    {
+                        "refreshToken": ""
+                    }
+                    """;
+
+            // When & Then
+            mockMvc.perform(post("/api/v1/auth/reissue")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(requestBody))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.success").value(false));
+
+            verify(authService, never()).reissueAccessToken(any(AccessTokenReissueCommand.class));
+
+        }
+
+
+    }
+
+
 }

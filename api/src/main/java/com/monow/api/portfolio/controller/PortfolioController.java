@@ -4,6 +4,7 @@ import com.monow.api.portfolio.application.PortfolioQueryService;
 import com.monow.api.portfolio.dto.response.PortfolioResponse;
 import com.monow.global.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -17,10 +18,7 @@ public class PortfolioController {
     private final PortfolioQueryService portfolioQueryService;
 
     @GetMapping
-    public ApiResponse<PortfolioResponse> getPortfolio() {
-        // 임시 userId
-        Long userId = 2L;
-
+    public ApiResponse<PortfolioResponse> getPortfolio( @AuthenticationPrincipal Long userId) {
         PortfolioResponse response = portfolioQueryService.getPortfolio(userId);
 
         return ApiResponse.success(response);
