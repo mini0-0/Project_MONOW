@@ -1,9 +1,9 @@
 package com.monow.external.kis.stock.client;
 
-import com.monow.global.external.kis.application.KisAccessTokenProvider;
-import com.monow.global.external.kis.dto.response.KisStockInfoResponse;
-import com.monow.global.external.kis.client.KisStockInfoClient;
+import com.monow.external.kis.auth.application.KisAccessTokenProvider;
+import com.monow.external.kis.stock.dto.response.KisStockInfoResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
