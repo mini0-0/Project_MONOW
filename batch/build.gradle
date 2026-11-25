@@ -25,3 +25,24 @@ dependencies {
 
 bootJar { enabled = true }
 jar { enabled = false }
+
+tasks.register('syncDartCorpCodes', JavaExec) {
+	group = 'application'
+	description = 'Synchronizes Open DART corporation codes once.'
+	classpath = sourceSets.main.runtimeClasspath
+	mainClass.set('com.monow.batch.dart.corpcode.StockCorpCodeSyncCommand')
+}
+
+tasks.register('collectDartDisclosures', JavaExec) {
+	group = 'application'
+	description = 'Collects and stores Open DART disclosure metadata.'
+	classpath = sourceSets.main.runtimeClasspath
+	mainClass.set('com.monow.batch.dart.disclosure.DartDisclosureCollectionCommand')
+}
+
+tasks.register('downloadDartDisclosure', JavaExec) {
+	group = 'application'
+	description = 'Downloads the original ZIP for a stored Open DART disclosure.'
+	classpath = sourceSets.main.runtimeClasspath
+	mainClass.set('com.monow.batch.dart.document.DartDocumentDownloadCommand')
+}
