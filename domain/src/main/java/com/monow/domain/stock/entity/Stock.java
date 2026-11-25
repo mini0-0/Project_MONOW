@@ -25,6 +25,9 @@ public class Stock extends BaseTimeEntity {
     @Column(name = "stock_code",nullable = false ,unique = true, length = 20)
     private String stockCode;
 
+    @Column(name = "corp_code", length = 8)
+    private String corpCode;
+
     @Column(name = "product_name", nullable = false, length = 100)
     private String productName;
 
